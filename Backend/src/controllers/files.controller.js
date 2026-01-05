@@ -1,29 +1,45 @@
 const File = require("../models/File");
 const User = require("../models/User");
 const crypto = require("crypto");
-const { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const mongoose = require("mongoose");
+const {
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
 const s3 = require("../config/storage");
 
-/* LIST FILES */
+/* ===== LIST FILES ===== */
 const listFiles = async (req, res) => {
-  const parent = req.query.parent || null;
+  try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) return res.status(401).end();
 
-  const files = await File.find({
-    user: req.user.id,
-    parent: parent,
-  }).sort({ isFolder: -1, createdAt: -1 });
+    const parent =
+      req.query.parent && req.query.parent !== "null"
+        ? req.query.parent
+        : null;
 
-  res.json(files);
+    const files = await File.find({
+      user: userId,
+      parent,
+    }).sort({ isFolder: -1, createdAt: -1 });
+
+    res.json(files);
+  } catch {
+    res.status(500).json({ message: "Failed to list files" });
+  }
 };
 
-
-/* Preview Files */
-
+/* ===== PREVIEW FILE ===== */
 const previewFile = async (req, res) => {
   try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) return res.status(401).end();
+
     const file = await File.findOne({
       _id: req.params.id,
-      user: req.user.id,
+      user: userId,
     });
 
     if (!file) return res.status(404).end();
@@ -36,36 +52,53 @@ const previewFile = async (req, res) => {
     );
 
     res.setHeader("Content-Type", file.type);
-    res.setHeader("Content-Disposition", "inline"); // ✅ REQUIRED
+    res.setHeader("Content-Disposition", "inline");
     res.setHeader("Cache-Control", "private, max-age=3600");
 
     data.Body.pipe(res);
-  } catch (err) {
-    // ⚠️ Do NOT console.error here (prevents spam)
+  } catch {
     console.warn("PREVIEW SKIPPED");
     res.status(404).end();
   }
 };
 
-
-
-
-/* UPLOAD FILE */
+/* ===== UPLOAD FILE ===== */
 const uploadFile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    /* FIX: aggregation MUST use ObjectId */
     const used = await File.aggregate([
-      { $match: { user: userId } },
-      { $group: { _id: null, total: { $sum: "$size" } } },
+      {
+        $match: {
+          user: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$size" },
+        },
+      },
     ]);
 
     const usedBytes = used[0]?.total || 0;
     const user = await User.findById(userId);
 
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-    if (usedBytes + req.file.size > user.quota)
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (usedBytes + req.file.size > user.quota) {
       return res.status(403).json({ message: "Storage quota exceeded" });
+    }
 
     const key = crypto.randomBytes(16).toString("hex");
 
@@ -78,29 +111,37 @@ const uploadFile = async (req, res) => {
       })
     );
 
+    const parent =
+      req.body.parent && req.body.parent !== "null"
+        ? req.body.parent
+        : null;
+
     const file = await File.create({
       user: userId,
       name: req.file.originalname,
       size: req.file.size,
       type: req.file.mimetype,
-      parent: req.body.parent || null,
+      parent,
       isFolder: false,
-
       key,
     });
 
     res.status(201).json(file);
-  } catch {
+  } catch (err) {
+    console.error("UPLOAD ERROR:", err);
     res.status(500).json({ message: "Upload failed" });
   }
 };
 
-/* DOWNLOAD FILE */
+/* ===== DOWNLOAD FILE ===== */
 const downloadFile = async (req, res) => {
   try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) return res.status(401).end();
+
     const file = await File.findOne({
       _id: req.params.id,
-      user: req.user.id,
+      user: userId,
     });
 
     if (!file) {
@@ -127,12 +168,16 @@ const downloadFile = async (req, res) => {
   }
 };
 
-
-
-
-/* DELETE FILE */
+/* ===== DELETE FILE ===== */
 const deleteFile = async (req, res) => {
-  const file = await File.findOne({ _id: req.params.id, user: req.user.id });
+  const userId = req.user?.id || req.user?._id;
+  if (!userId) return res.status(401).end();
+
+  const file = await File.findOne({
+    _id: req.params.id,
+    user: userId,
+  });
+
   if (!file) return res.status(404).json({ message: "File not found" });
 
   await s3.send(
@@ -146,18 +191,19 @@ const deleteFile = async (req, res) => {
   res.json({ message: "File deleted" });
 };
 
-
-/* RENAME FILE */
+/* ===== RENAME FILE ===== */
 const renameFile = async (req, res) => {
-  const { name } = req.body;
+  const userId = req.user?.id || req.user?._id;
+  if (!userId) return res.status(401).end();
 
+  const { name } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ message: "Invalid filename" });
   }
 
   const file = await File.findOne({
     _id: req.params.id,
-    user: req.user.id,
+    user: userId,
   });
 
   if (!file) {
@@ -170,30 +216,28 @@ const renameFile = async (req, res) => {
   res.json(file);
 };
 
-
-/* CREATE FOLDER */
+/* ===== CREATE FOLDER ===== */
 const createFolder = async (req, res) => {
-  const { name, parent = null } = req.body;
+  const userId = req.user?.id || req.user?._id;
+  if (!userId) return res.status(401).end();
 
+  const { name, parent = null } = req.body;
   if (!name) {
     return res.status(400).json({ message: "Folder name required" });
   }
 
   const folder = await File.create({
-    user: req.user.id,
+    user: userId,
     name,
     size: 0,
     type: "folder",
     key: `folder-${Date.now()}`,
-    parent,
+    parent: parent && parent !== "null" ? parent : null,
     isFolder: true,
   });
 
   res.status(201).json(folder);
 };
-
-
-
 
 module.exports = {
   listFiles,
@@ -204,4 +248,3 @@ module.exports = {
   renameFile,
   createFolder,
 };
-

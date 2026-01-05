@@ -4,9 +4,8 @@ import { useAuth } from "../context/AuthContext";
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
-  // 🔑 CRITICAL: wait for auth check
   if (loading) {
-    return null; // or loader later
+    return null; // wait for /me check
   }
 
   if (!user) {

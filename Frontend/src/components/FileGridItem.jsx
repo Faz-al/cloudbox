@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { API_BASE } from "../utils/api";
 
 export default function FileGridItem({
   file,
@@ -36,10 +37,8 @@ export default function FileGridItem({
   };
 
   const handleDownload = () => {
-    window.open(
-      `http://localhost:5000/api/files/download/${file._id}`,
-      "_blank"
-    );
+    
+      window.open(`${API_BASE}/files/download/${file._id}`, "_blank");
     setMenuOpen(false);
   };
 
@@ -61,7 +60,8 @@ export default function FileGridItem({
         </div>
       ) : isImage ? (
         <img
-          src={`http://localhost:5000/api/files/${file._id}/preview`}
+          src={`${API_BASE}/files/${file._id}/preview`}
+
           alt={file.name}
           className="object-cover w-full h-full"
           draggable={false}

@@ -7,6 +7,11 @@ import FileRow from "../components/FileRow";
 import FileGridItem from "../components/FileGridItem";
 import ImagePreview from "../components/ImagePreview";
 import { deleteFile, getFiles, createFolder } from "../utils/api";
+import { API_BASE } from "../utils/api";
+
+
+
+
 
 export default function Files() {
   const navigate = useNavigate();
@@ -141,7 +146,8 @@ export default function Files() {
     formData.append("file", file);
     if (currentFolder) formData.append("parent", currentFolder);
 
-    await fetch("http://localhost:5000/api/files/upload", {
+    await fetch(`${API_BASE}/files/upload`, {
+
       method: "POST",
       body: formData,
       credentials: "include",

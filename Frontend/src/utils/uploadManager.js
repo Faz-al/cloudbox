@@ -1,3 +1,7 @@
+import { API_BASE } from "../utils/api";
+
+
+
 const listeners = new Set();
 let uploads = [];
 
@@ -50,9 +54,10 @@ export const startUploads = (files, parentFolder = null) => {
       notify();
     };
 
-    xhr.open("POST", "http://localhost:5000/api/files/upload");
+    xhr.open("POST", `${API_BASE}/files/upload`);
     xhr.withCredentials = true;
     xhr.send(formData);
+
   });
 };
 

@@ -1,3 +1,5 @@
+import { API_BASE } from "../utils/api"
+
 export default function FileRow({
   file,
   onPreview,
@@ -8,7 +10,8 @@ export default function FileRow({
   const handleDownload = () => {
     if (file.isFolder) return;
 
-    const url = `http://localhost:5000/api/files/download/${file._id}`;
+    const url = `${API_BASE}/files/download/${file._id}`;
+
     window.open(url, "_blank");
   };
 

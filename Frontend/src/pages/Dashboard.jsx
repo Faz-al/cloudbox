@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { getFiles } from "../utils/api";
 import ImagePreview from "../components/ImagePreview";
+import { API_BASE } from "../utils/api";
+
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -85,7 +87,8 @@ export default function Dashboard() {
       setTimeout(() => setToast(""), 2500);
     };
 
-    xhr.open("POST", "http://localhost:5000/api/files/upload");
+    xhr.open("POST", `${API_BASE}/files/upload`);
+
     xhr.withCredentials = true;
     xhr.send(formData);
   };

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { API_BASE } from "../utils/api";
+
 
 export default function ImagePreview({ files = [], activeFile, onClose }) {
   const [index, setIndex] = useState(null);
@@ -113,7 +115,7 @@ export default function ImagePreview({ files = [], activeFile, onClose }) {
           <button onClick={() => setShowInfo((v) => !v)}>Info</button>
 
           <a
-            href={`http://localhost:5000/api/files/download/${file._id}`}
+            href={`${API_BASE}/files/download/${file._id}`}
             target="_blank"
             rel="noreferrer"
           >
@@ -163,14 +165,16 @@ export default function ImagePreview({ files = [], activeFile, onClose }) {
 
         {isVideo ? (
           <video
-            src={`http://localhost:5000/api/files/${file._id}/preview`}
+            src={`${API_BASE}/files/${file._id}/preview`}
+
             controls
             autoPlay
             className="max-w-full max-h-[80vh] rounded-2xl shadow-[0_40px_120px_rgba(0,0,0,0.6)] bg-black"
           />
         ) : (
           <img
-            src={`http://localhost:5000/api/files/${file._id}/preview`}
+            src={`${API_BASE}/files/${file._id}/preview`}
+
             alt={file.name}
             draggable={false}
             className="select-none max-w-full max-h-[80vh] rounded-2xl shadow-[0_40px_120px_rgba(0,0,0,0.6)]"

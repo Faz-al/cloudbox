@@ -2,6 +2,14 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
+/* ===== COOKIE OPTIONS (PRODUCTION SAFE) ===== */
+const cookieOptions = {
+  httpOnly: true,
+  secure: true,        // REQUIRED on Render (HTTPS)
+  sameSite: "none",    // REQUIRED for frontend + backend on different domains
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
+
 /* ================= SIGNUP ================= */
 const signup = async (req, res) => {
   try {
@@ -21,7 +29,7 @@ const signup = async (req, res) => {
     const user = await User.create({
       email,
       password: hashedPassword,
-      quota: 5 * 1024,
+      quota: 5 * 1024 * 1024 * 1024, // 5 GB (FIXED)
     });
 
     const token = jwt.sign(
@@ -30,11 +38,7 @@ const signup = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-    });
+    res.cookie("token", token, cookieOptions);
 
     return res.status(201).json({
       message: "Signup successful",
@@ -70,11 +74,7 @@ const login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-    });
+    res.cookie("token", token, cookieOptions);
 
     return res.json({
       message: "Login successful",
@@ -91,7 +91,11 @@ const login = async (req, res) => {
 
 /* ================= LOGOUT ================= */
 const logout = (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
   res.json({ message: "Logged out" });
 };
 

@@ -34,18 +34,33 @@ export const login = (email, password) =>
 export const logout = () =>
   apiFetch("/auth/logout", { method: "POST" });
 
-export const getMe = () => apiFetch("/auth/me");
+export const getMe = async () => {
+  const data = await apiFetch("/auth/me");
+  return { id: data.userId };
+};
+
 
 /* ===== FILES ===== */
 export const getFiles = (query = "") =>
   apiFetch(`/files${query}`);
 
 
-export const uploadFile = (file) =>
-  apiFetch("/files/upload-url", {
+export const uploadFile = async (file, parent = null) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (parent) formData.append("parent", parent);
+
+  const res = await fetch(`${API_BASE}/files/upload`, {
     method: "POST",
-    body: JSON.stringify(file),
+    credentials: "include",
+    body: formData,
   });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Upload failed");
+  return data;
+};
+
 
 export const deleteFile = (id) =>
   apiFetch(`/files/${id}`, { method: "DELETE" });

@@ -1,33 +1,77 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import { useState } from "react";
+
 import Home from "./pages/Home";
-import ForgotPassword from "./pages/ForgotPassword";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Files from "./pages/Files";
 import Upgrade from "./pages/Upgrade";
-import { getUser } from "./utils/auth";
+import ForgotPassword from "./pages/ForgotPassword";
 
-
-const ProtectedRoute = ({ children }) => {
-  const user = getUser();
-  return user ? children : <Navigate to="/login" />;
-};
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
+import ImagePreview from "./components/ImagePreview";
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+  // 🔥 GLOBAL PREVIEW STATE
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewFiles, setPreviewFiles] = useState([]);
 
+  const openPreview = (file, files) => {
+    if (!file || file.isFolder) return;
+    setPreviewFiles(files);
+    setPreviewFile(file);
+  };
+
+  const closePreview = () => setPreviewFile(null);
+
+  return (
+    <>
+      <Routes>
+        {/* PUBLIC */}
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <Home />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          }
+        />
+
+        {/* PROTECTED */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Dashboard openPreview={openPreview} />
             </ProtectedRoute>
           }
         />
@@ -36,7 +80,7 @@ export default function App() {
           path="/files"
           element={
             <ProtectedRoute>
-              <Files />
+              <Files openPreview={openPreview} />
             </ProtectedRoute>
           }
         />
@@ -50,6 +94,13 @@ export default function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
+
+      {/* 🔥 ONE GLOBAL PREVIEW */}
+      <ImagePreview
+        files={previewFiles}
+        activeFile={previewFile}
+        onClose={closePreview}
+      />
+    </>
   );
 }

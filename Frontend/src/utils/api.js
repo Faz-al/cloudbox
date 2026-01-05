@@ -1,23 +1,62 @@
 const API_BASE = "http://localhost:5000/api";
 
-export const getFiles = async () => {
-  const res = await fetch(`${API_BASE}/files`);
-  return res.json();
+const apiFetch = async (url, options = {}) => {
+  const res = await fetch(`${API_BASE}${url}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Request failed");
+  }
+
+  return data;
 };
 
-export const uploadFile = async (file) => {
-  const res = await fetch(`${API_BASE}/files/upload-url`, {
+/* ===== AUTH ===== */
+export const signup = (email, password) =>
+  apiFetch("/auth/signup", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    body: JSON.stringify({ email, password }),
+  });
+
+export const login = (email, password) =>
+  apiFetch("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+
+export const logout = () =>
+  apiFetch("/auth/logout", { method: "POST" });
+
+export const getMe = () => apiFetch("/auth/me");
+
+/* ===== FILES ===== */
+export const getFiles = (query = "") =>
+  apiFetch(`/files${query}`);
+
+
+export const uploadFile = (file) =>
+  apiFetch("/files/upload-url", {
+    method: "POST",
     body: JSON.stringify(file),
   });
-  return res.json();
-};
 
-export const deleteFile = async (id) => {
-  await fetch(`${API_BASE}/files/${id}`, {
-    method: "DELETE",
+export const deleteFile = (id) =>
+  apiFetch(`/files/${id}`, { method: "DELETE" });
+
+export const renameFile = (id, name) =>
+  apiFetch(`/files/${id}/rename`, {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
   });
-};
+
+
+  export const createFolder = (name, parent = null) =>
+  apiFetch("/files/folder", {
+    method: "POST",
+    body: JSON.stringify({ name, parent }),
+  });

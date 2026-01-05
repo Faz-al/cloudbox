@@ -1,40 +1,44 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { Link } from "react-router-dom";
+
 import FeatureCard from "../components/FeatureCard";
 import { useEffect } from "react";
 
-
 export default function Home() {
 
+  // 🔑 THIS IS THE FIX
+  
+
   useEffect(() => {
-  const section = document.querySelector(".demo-section");
-  if (!section) return;
+    const section = document.querySelector(".demo-section");
+    if (!section) return;
 
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting) {
-        section.classList.add("is-active");
-      } else {
-        section.classList.remove("is-active");
-        // 🔑 reset animations when leaving view
-        void section.offsetWidth;
-      }
-    },
-    { threshold: 0.4 }
-  );
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          section.classList.add("is-active");
+        } else {
+          section.classList.remove("is-active");
+          void section.offsetWidth;
+        }
+      },
+      { threshold: 0.4 }
+    );
 
-  observer.observe(section);
-  return () => observer.disconnect();
-}, []);
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
-
+  // ⛔ Prevent flicker while checking auth
 
 
   return (
     <>
       <Navbar />
-
       <main className="bg-gradient-to-b from-blue-50 via-white to-white">
+        {/* EVERYTHING BELOW IS UNCHANGED */}
+
 
 
 
@@ -53,18 +57,20 @@ export default function Home() {
     </p>
 
     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center hero-cta">
-      <a
-        href="/signup"
+      <Link
+        to="/signup"
         className="bg-blue-600 text-white px-8 py-3.5 rounded-xl font-medium text-center"
       >
         Get started — Free 5GB
-      </a>
-      <a
-        href="/login"
-        className="px-8 py-3.5 rounded-xl border border-gray-300 text-center"
-      >
-        Login
-      </a>
+      </Link>
+
+    <Link
+      to="/login"
+      className="px-8 py-3.5 rounded-xl border border-gray-300 text-center"
+    >
+      Login
+    </Link>
+
     </div>
 
     <p className="text-xs text-gray-500 mt-4 hero-note">
@@ -533,12 +539,13 @@ export default function Home() {
         Free, forever
       </p>
 
-      <a
-        href="/signup"
+      <Link
+        to="/signup"
         className="block bg-blue-600 text-white py-3.5 rounded-xl font-medium"
       >
         Get started
-      </a>
+      </Link>
+
 
       <p className="text-xs text-gray-500 mt-4">
         No credit card required

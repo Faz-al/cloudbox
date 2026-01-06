@@ -1,6 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 import { useState } from "react";
 
+import AccountSettings from "./pages/AccountSettings";
+import AppLayout from "./layouts/AppLayout";
+
+import SettingsSecurity from "./pages/SettingsSecurity";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -67,32 +72,33 @@ export default function App() {
         />
 
         {/* PROTECTED */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard openPreview={openPreview} />
-            </ProtectedRoute>
-          }
-        />
+       
+<Route
+  element={
+    <ProtectedRoute>
+      <AppLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route
+    path="/dashboard"
+    element={<Dashboard openPreview={openPreview} />}
+  />
 
-        <Route
-          path="/files"
-          element={
-            <ProtectedRoute>
-              <Files openPreview={openPreview} />
-            </ProtectedRoute>
-          }
-        />
+  <Route
+    path="/files"
+    element={<Files openPreview={openPreview} />}
+  />
 
-        <Route
-          path="/upgrade"
-          element={
-            <ProtectedRoute>
-              <Upgrade />
-            </ProtectedRoute>
-          }
-        />
+  <Route path="/upgrade" element={<Upgrade />} />
+
+  <Route path="/account" element={<AccountSettings />} />
+  
+  <Route path="/settings/security" element={<SettingsSecurity />} />
+
+</Route>
+
+
       </Routes>
 
       {/* 🔥 ONE GLOBAL PREVIEW */}

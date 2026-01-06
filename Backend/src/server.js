@@ -1,3 +1,5 @@
+console.log("🔥 THIS SERVER FILE IS RUNNING");
+
 require("dotenv").config();
 
 const express = require("express");
@@ -41,9 +43,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes);
 
 /* ===== HEALTH CHECK ===== */
-app.get("/api/health", (req, res) => {
-  res.json({ status: "CloudBox backend running" });
+app.get("/", (req, res) => {
+  res.send("CloudBox API is running");
 });
+
 
 /* ===== START SERVER ===== */
 const PORT = process.env.PORT || 5000;

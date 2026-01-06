@@ -10,34 +10,53 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Check auth on page load only
+
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const data = await getMe();
-        setUser(data);
+  let cancelled = false;
 
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkAuth();
-  }, []);
+  const checkAuth = async () => {
+    try {
+      const data = await getMe();
+      if (cancelled) return;
 
-  // ✅ FIXED SIGNUP (NO getMe HERE)
-  const signup = async (email, password) => {
-    const data = await apiSignup(email, password);
-    setUser(data.user);
+      setUser({
+        id: data._id || data.id,
+        email: data.email,
+        storageLimit: data.storageLimit,
+        usedStorage: data.usedStorage,
+        plan: data.plan,
+      });
+    } catch {
+      if (!cancelled) setUser(null);
+    }
   };
 
-  // ✅ FIXED LOGIN (NO getMe HERE)
+  checkAuth();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
+
+
+  const signup = async (email, password) => {
+  await apiSignup(email, password);
+  // DO NOT set user
+};
+
+
   const login = async (email, password) => {
     const data = await apiLogin(email, password);
-    setUser(data.user);
+    setUser({
+      id: data.user._id || data.user.id,
+      email: data.user.email,
+      storageLimit: data.user.storageLimit,
+      usedStorage: data.user.usedStorage,
+      plan: data.user.plan,
+    });
   };
 
   const logout = async () => {

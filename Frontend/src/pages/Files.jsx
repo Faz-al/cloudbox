@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
+
 import Sidebar from "../components/Sidebar";
 import Breadcrumb from "../components/Breadcrumb";
 import FileRow from "../components/FileRow";
@@ -8,6 +8,8 @@ import FileGridItem from "../components/FileGridItem";
 import ImagePreview from "../components/ImagePreview";
 import { deleteFile, getFiles, createFolder } from "../utils/api";
 import { API_BASE } from "../utils/api";
+import { uploadFile } from "../utils/api";
+
 
 
 
@@ -139,26 +141,19 @@ export default function Files() {
   /* ---------------- ACTIONS ---------------- */
 
   const handleFileSelected = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    if (currentFolder) formData.append("parent", currentFolder);
+  await uploadFile(file, currentFolder);
 
-    await fetch(`${API_BASE}/files/upload`, {
+  e.target.value = null;
 
-      method: "POST",
-      body: formData,
-      credentials: "include",
-    });
+  const data = await getFiles(
+    currentFolder ? `?parent=${currentFolder}` : ""
+  );
+  setFiles(data);
+};
 
-    e.target.value = null;
-    const data = await getFiles(
-      currentFolder ? `?parent=${currentFolder}` : ""
-    );
-    setFiles(data);
-  };
 
   const handleDelete = async (id) => {
     await deleteFile(id);
@@ -179,7 +174,7 @@ export default function Files() {
 
   return (
     <>
-      <Navbar />
+      
 
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar onAllFiles={goToRoot} />

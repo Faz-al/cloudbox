@@ -1,4 +1,4 @@
-import Navbar from "../components/Navbar";
+
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
@@ -33,13 +33,20 @@ export default function Dashboard() {
   };
 
   /* ===== Storage stats ===== */
-  const total = 10;
-  const usedBytes = files.reduce((sum, f) => sum + f.size, 0);
-  const used = (usedBytes / (1024 * 1024 * 1024)).toFixed(2);
-  const percent = Math.min((used / total) * 100, 100);
+const totalBytes = user?.storageLimit || 0;
+const total = totalBytes / (1024 * 1024 * 1024);
 
-  const recentFiles = files.slice(0, 5);
-  const previewFiles = files.filter(
+const usedBytes = files.reduce((sum, f) => sum + f.size, 0);
+const used = usedBytes / (1024 * 1024 * 1024);
+
+const percent = total > 0 ? Math.min((used / total) * 100, 100) : 0;
+
+// ✅ ADD THESE (FORMATTED VALUES FOR UI ONLY)
+const usedDisplay = used.toFixed(2);
+const totalDisplay = total.toFixed(0);
+
+const recentFiles = files.slice(0, 5);
+const previewFiles = files.filter(
   (f) =>
     !f.isFolder &&
     (f.type?.startsWith("image") || f.type?.startsWith("video"))
@@ -70,16 +77,27 @@ export default function Dashboard() {
     };
 
     xhr.onload = async () => {
-      setUploading(false);
-      setUploadProgress(100);
-      setToast("File uploaded successfully");
-      await loadFiles();
+  setUploading(false);
 
-      setTimeout(() => {
-        setToast("");
-        setUploadProgress(0);
-      }, 2500);
-    };
+  if (xhr.status >= 200 && xhr.status < 300) {
+    setUploadProgress(100);
+    setToast("File uploaded successfully");
+    await loadFiles();
+  } else {
+    try {
+      const res = JSON.parse(xhr.responseText);
+      setToast(res.message || "Upload failed");
+    } catch {
+      setToast("Upload failed");
+    }
+  }
+
+  setTimeout(() => {
+    setToast("");
+    setUploadProgress(0);
+  }, 2500);
+};
+
 
     xhr.onerror = () => {
       setUploading(false);
@@ -95,7 +113,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <Navbar />
+      
 
       <main className="max-w-6xl mx-auto px-4 py-10 space-y-10">
         {/* Welcome */}
@@ -109,8 +127,9 @@ export default function Dashboard() {
           <div className="flex justify-between mb-2">
             <span className="font-medium">Storage usage</span>
             <span className="text-sm text-gray-600">
-              {used} GB of {total} GB
+              {usedDisplay} GB of {totalDisplay} GB
             </span>
+
           </div>
 
           <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">

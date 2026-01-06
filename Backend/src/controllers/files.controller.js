@@ -1,3 +1,16 @@
+/**
+ * STORAGE QUOTA ENFORCEMENT
+ * - Uses user.usedStorage + user.storageLimit (for progress bar)
+ * - DO NOT replace with aggregation (HWC)
+ * - Required for paid plans and upgraes 
+ * 
+ 
+ */
+
+
+
+const fs = require("fs");
+
 const File = require("../models/File");
 const User = require("../models/User");
 const crypto = require("crypto");
@@ -63,6 +76,7 @@ const previewFile = async (req, res) => {
 };
 
 /* ===== UPLOAD FILE ===== */
+/* ===== UPLOAD FILE ===== */
 const uploadFile = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?._id;
@@ -74,30 +88,17 @@ const uploadFile = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    /* FIX: aggregation MUST use ObjectId */
-    const used = await File.aggregate([
-      {
-        $match: {
-          user: new mongoose.Types.ObjectId(userId),
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$size" },
-        },
-      },
-    ]);
-
-    const usedBytes = used[0]?.total || 0;
     const user = await User.findById(userId);
-
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    if (usedBytes + req.file.size > user.quota) {
-      return res.status(403).json({ message: "Storage quota exceeded" });
+    const usedBytes = user.usedStorage || 0;
+
+    if (usedBytes + req.file.size > user.storageLimit) {
+      return res.status(403).json({
+        message: "Storage limit exceeded. Upgrade to continue.",
+      });
     }
 
     const key = crypto.randomBytes(16).toString("hex");
@@ -106,10 +107,13 @@ const uploadFile = async (req, res) => {
       new PutObjectCommand({
         Bucket: process.env.R2_BUCKET,
         Key: key,
-        Body: req.file.buffer,
+        Body: fs.createReadStream(req.file.path),
         ContentType: req.file.mimetype,
       })
     );
+
+    fs.unlinkSync(req.file.path);
+
 
     const parent =
       req.body.parent && req.body.parent !== "null"
@@ -126,12 +130,16 @@ const uploadFile = async (req, res) => {
       key,
     });
 
+    user.usedStorage += req.file.size;
+    await user.save();
+
     res.status(201).json(file);
   } catch (err) {
     console.error("UPLOAD ERROR:", err);
     res.status(500).json({ message: "Upload failed" });
   }
 };
+
 
 /* ===== DOWNLOAD FILE ===== */
 const downloadFile = async (req, res) => {
@@ -169,26 +177,41 @@ const downloadFile = async (req, res) => {
 };
 
 /* ===== DELETE FILE ===== */
+/* ===== DELETE FILE ===== */
 const deleteFile = async (req, res) => {
-  const userId = req.user?.id || req.user?._id;
-  if (!userId) return res.status(401).end();
+  try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) return res.status(401).end();
 
-  const file = await File.findOne({
-    _id: req.params.id,
-    user: userId,
-  });
+    const file = await File.findOne({
+      _id: req.params.id,
+      user: userId,
+    });
 
-  if (!file) return res.status(404).json({ message: "File not found" });
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
 
-  await s3.send(
-    new DeleteObjectCommand({
-      Bucket: process.env.R2_BUCKET,
-      Key: file.key,
-    })
-  );
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET,
+        Key: file.key,
+      })
+    );
 
-  await file.deleteOne();
-  res.json({ message: "File deleted" });
+    const user = await User.findById(userId);
+    if (user) {
+      user.usedStorage = Math.max(0, user.usedStorage - file.size);
+      await user.save();
+    }
+
+    await file.deleteOne();
+
+    res.json({ message: "File deleted" });
+  } catch (err) {
+    console.error("DELETE ERROR:", err);
+    res.status(500).json({ message: "Delete failed" });
+  }
 };
 
 /* ===== RENAME FILE ===== */

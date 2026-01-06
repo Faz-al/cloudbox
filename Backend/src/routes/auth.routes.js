@@ -1,25 +1,36 @@
+console.log("🔥 AUTH ROUTES FILE LOADED");
+const { logoutAll } = require("../controllers/auth.controller");
+
 const express = require("express");
 const router = express.Router();
-
-const {
-  signup,
-  login,
-  logout,
-} = require("../controllers/auth.controller");
-
+const User = require("../models/User");
 const authMiddleware = require("../middleware/auth.middleware");
 
-// Auth routes
+const { signup, login, logout, forgotPassword, resetPassword, changePassword,} =
+  require("../controllers/auth.controller");
+
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/logout-all", authMiddleware, logoutAll);
+router.post("/change-password", authMiddleware, changePassword);
 
-// Auth check (VERY IMPORTANT)
-router.get("/me", authMiddleware, (req, res) => {
-  res.json({ userId: req.user.id });
+
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
+
+
+// /me route
+router.get("/me", authMiddleware, async (req, res) => {
+  const user = await User.findById(req.user.id).select(
+    "_id email storageLimit usedStorage plan"
+  );
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json(user);
 });
-
-// TEMP test route (can remove later)
-
 
 module.exports = router;

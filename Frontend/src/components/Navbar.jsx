@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { FEATURES } from "../config/features";
+
 
 import { subscribeUploads, getActiveCount } from "../utils/uploadManager";
 
@@ -99,18 +101,35 @@ useEffect(() => {
 
     {/* Future links */}
     <button
-      disabled
-      className="w-full text-left px-4 py-2.5 text-sm text-gray-400 cursor-not-allowed"
+        onClick={() => {
+          setProfileOpen(false);
+         navigate("/account");
+       }}
+         className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
     >
-      Account settings
-    </button>
+          Account settings
+      </button>
 
-    <button
-      disabled
-      className="w-full text-left px-4 py-2.5 text-sm text-gray-400 cursor-not-allowed"
-    >
-      Security
-    </button>
+
+    {FEATURES.SECURITY_PAGE ? (
+  <button
+    onClick={() => {
+      setProfileOpen(false);
+      navigate("/settings/security");
+    }}
+    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+  >
+    Security
+  </button>
+) : (
+  <button
+    disabled
+    className="w-full text-left px-4 py-2.5 text-sm text-gray-400 cursor-not-allowed"
+  >
+    Security
+  </button>
+)}
+
 
     {/* Logout */}
     <button

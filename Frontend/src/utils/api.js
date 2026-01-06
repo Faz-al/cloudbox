@@ -35,10 +35,22 @@ export const login = (email, password) =>
 export const logout = () =>
   apiFetch("/auth/logout", { method: "POST" });
 
+export const logoutEverywhere = () =>
+  apiFetch("/auth/logout-all", { method: "POST" });
+
+
+
 export const getMe = async () => {
   const data = await apiFetch("/auth/me");
-  return { id: data.userId };
+  return data;
 };
+
+export const changePassword = (currentPassword, newPassword) =>
+  apiFetch("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
 
 
 /* ===== FILES ===== */

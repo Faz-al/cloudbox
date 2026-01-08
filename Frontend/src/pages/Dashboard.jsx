@@ -1,18 +1,16 @@
-
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { getFiles } from "../utils/api";
 import ImagePreview from "../components/ImagePreview";
 import { API_BASE } from "../utils/api";
-
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Dashboard() {
   const { user } = useAuth();
 
   const [files, setFiles] = useState([]);
   const [previewFile, setPreviewFile] = useState(null);
-
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [toast, setToast] = useState("");
@@ -25,50 +23,43 @@ export default function Dashboard() {
 
   const loadFiles = async () => {
     try {
-      const data = await getFiles();
-      setFiles(data);
+      setFiles(await getFiles());
     } catch {
       console.error("Failed to load files");
     }
   };
 
-  /* ===== Storage stats ===== */
-const totalBytes = user?.storageLimit || 0;
-const total = totalBytes / (1024 * 1024 * 1024);
+  /* ===== Storage ===== */
+  const totalBytes = user?.storageLimit || 0;
+  const usedBytes = files.reduce((s, f) => s + f.size, 0);
 
-const usedBytes = files.reduce((sum, f) => sum + f.size, 0);
-const used = usedBytes / (1024 * 1024 * 1024);
+  const totalGB = totalBytes / (1024 ** 3);
+  const usedGB = usedBytes / (1024 ** 3);
 
-const percent = total > 0 ? Math.min((used / total) * 100, 100) : 0;
+  const percent =
+    totalBytes > 0 ? Math.min((usedBytes / totalBytes) * 100, 100) : 0;
 
-// ✅ ADD THESE (FORMATTED VALUES FOR UI ONLY)
-const usedDisplay = used.toFixed(2);
-const totalDisplay = total.toFixed(0);
+  const recentFiles = files.slice(0, 5);
+  const previewFiles = files.filter(
+    (f) =>
+      !f.isFolder &&
+      (f.type?.startsWith("image") || f.type?.startsWith("video"))
+  );
 
-const recentFiles = files.slice(0, 5);
-const previewFiles = files.filter(
-  (f) =>
-    !f.isFolder &&
-    (f.type?.startsWith("image") || f.type?.startsWith("video"))
-);
-
-
-  /* ===== Upload logic (PRO) ===== */
-
-  const handleUpload = async (file) => {
+  /* ===== Upload ===== */
+  const handleUpload = (file) => {
     if (!file) return;
 
     const lastFolder = localStorage.getItem("lastFolder") || null;
-
     const xhr = new XMLHttpRequest();
     const formData = new FormData();
+
     formData.append("file", file);
     if (lastFolder) formData.append("parent", lastFolder);
 
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
+      if (e.lengthComputable)
         setUploadProgress(Math.round((e.loaded / e.total) * 100));
-      }
     };
 
     xhr.onloadstart = () => {
@@ -77,206 +68,162 @@ const previewFiles = files.filter(
     };
 
     xhr.onload = async () => {
-  setUploading(false);
-
-  if (xhr.status >= 200 && xhr.status < 300) {
-    setUploadProgress(100);
-    setToast("File uploaded successfully");
-    await loadFiles();
-  } else {
-    try {
-      const res = JSON.parse(xhr.responseText);
-      setToast(res.message || "Upload failed");
-    } catch {
-      setToast("Upload failed");
-    }
-  }
-
-  setTimeout(() => {
-    setToast("");
-    setUploadProgress(0);
-  }, 2500);
-};
-
-
-    xhr.onerror = () => {
       setUploading(false);
-      setToast("Upload failed");
-      setTimeout(() => setToast(""), 2500);
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        setToast("Upload complete");
+        await loadFiles();
+      } else {
+        setToast("Upload failed");
+      }
+
+      setTimeout(() => {
+        setToast("");
+        setUploadProgress(0);
+      }, 2200);
     };
 
     xhr.open("POST", `${API_BASE}/files/upload`);
-
     xhr.withCredentials = true;
     xhr.send(formData);
   };
 
   return (
     <>
-      
+      <main className="max-w-7xl mx-auto px-8 py-14 space-y-16">
+        {/* ===== HERO ===== */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="space-y-2"
+        >
+          <h1 className="text-4xl font-semibold tracking-tight text-gray-900">
+            Welcome back
+          </h1>
+          <p className="text-sm text-gray-500">{user?.email}</p>
+        </motion.section>
 
-      <main className="max-w-6xl mx-auto px-4 py-10 space-y-10">
-        {/* Welcome */}
-        <div>
-          <h1 className="text-2xl font-semibold">Welcome back</h1>
-          <p className="text-sm text-gray-600">{user?.email}</p>
-        </div>
+        {/* ===== PRIMARY PANEL ===== */}
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, duration: 0.45 }}
+          className="rounded-3xl bg-white border border-gray-200/70 p-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <p className="text-sm font-medium text-gray-900">
+                Storage usage
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {usedGB.toFixed(2)} GB of {totalGB.toFixed(0)} GB used
+              </p>
+            </div>
 
-        {/* Storage */}
-        <div className="bg-white border rounded-2xl p-6">
-          <div className="flex justify-between mb-2">
-            <span className="font-medium">Storage usage</span>
-            <span className="text-sm text-gray-600">
-              {usedDisplay} GB of {totalDisplay} GB
-            </span>
-
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+            >
+              Upload
+            </button>
           </div>
 
-          <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-600 transition-all"
-              style={{ width: `${percent}%` }}
+          <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${percent}%` }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              className="h-full bg-blue-600"
             />
           </div>
 
-          <div className="flex gap-6 mt-4 text-sm text-gray-600">
-            <span>{files.length} files</span>
-            <span>Folders coming soon</span>
+          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <QuickLink to="/files" label="All files" />
+            <QuickLink to="/files?type=image" label="Images" />
+            <QuickLink to="/files?type=video" label="Videos" />
+            <QuickLink to="/files?type=document" label="Documents" />
           </div>
-        </div>
+        </motion.section>
 
-        {/* Upload progress */}
-       {uploading && (
-  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300">
-    <div className="flex items-center gap-3 bg-white border shadow-lg rounded-full px-4 py-2 backdrop-blur">
-      {/* Spinner */}
-      <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+        {/* ===== RECENT FILES ===== */}
+        <section className="space-y-4">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">
+            Recent files
+          </h2>
 
-      {/* Text */}
-      <div className="text-xs text-gray-700 whitespace-nowrap">
-        Uploading… {uploadProgress}%
-      </div>
+          <div className="divide-y rounded-2xl border border-gray-200/70 bg-white">
+            {recentFiles.length === 0 && (
+              <div className="p-6 text-sm text-gray-500">
+                No files uploaded yet
+              </div>
+            )}
 
-      {/* Progress bar */}
-      <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-blue-600 transition-all duration-200"
-          style={{ width: `${uploadProgress}%` }}
-        />
-      </div>
-    </div>
-  </div>
-)}
+            {recentFiles.map((file) => (
+              <div
+  key={file._id}
+  className="px-6 py-4 flex items-center justify-between text-sm cursor-pointer
+             transition-colors duration-150 hover:bg-gray-50"
+  onClick={() => {
+    if (
+      file.type?.startsWith("image") ||
+      file.type?.startsWith("video")
+    ) {
+      setPreviewFile(file);
+    }
+  }}
+>
+  <span className="truncate text-gray-900">
+    {file.name}
+  </span>
+  <span className="text-gray-500">
+    {(file.size / (1024 * 1024)).toFixed(2)} MB
+  </span>
+</div>
 
-
-        {/* Hidden upload input */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files[0];
-            e.target.value = null;
-            handleUpload(file);
-          }}
-        />
-
-        {/* Quick Actions */}
-        <div>
-          <h2 className="font-semibold mb-4">Quick actions</h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div
-              onClick={() => fileInputRef.current.click()}
-              className="bg-white border rounded-xl p-5 hover:shadow-md cursor-pointer"
-            >
-              <p className="font-medium mb-1">Upload file</p>
-              <p className="text-sm text-gray-600">
-                Upload a new file directly
-              </p>
-            </div>
-
-            <Link
-              to="/files"
-              className="bg-white border rounded-xl p-5 hover:shadow-md"
-            >
-              <p className="font-medium mb-1">Upload folder</p>
-              <p className="text-sm text-gray-600">
-                Upload an entire folder
-              </p>
-            </Link>
-
-            <div className="bg-gray-50 border rounded-xl p-5 text-gray-400">
-              <p className="font-medium mb-1">Create folder</p>
-              <p className="text-sm">Coming soon</p>
-            </div>
+            ))}
           </div>
-        </div>
-
-        {/* Recent Files */}
-        <div>
-          <h2 className="font-semibold mb-4">Recent files</h2>
-
-          {recentFiles.length === 0 ? (
-            <div className="bg-white border rounded-xl p-6 text-gray-500">
-              No files uploaded yet
-            </div>
-          ) : (
-            <div className="bg-white border rounded-xl divide-y">
-              {recentFiles.map((file) => (
-                <div
-                  key={file._id}
-                  onClick={() => {
-  if (file.isFolder) {
-    window.location.href = `/files?folder=${file._id}`;
-  } else if (
-    file.type?.startsWith("image") ||
-    file.type?.startsWith("video")
-  ) {
-    setPreviewFile(file);
-  }
-}}
-
-                  className="px-4 py-3 flex justify-between items-center text-sm cursor-pointer hover:bg-gray-50"
-                >
-                  <span className="truncate">{file.name}</span>
-                  <span className="text-gray-500">
-                    {(file.size / (1024 * 1024)).toFixed(2)} MB
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Smart Folders */}
-        <div>
-          <h2 className="font-semibold mb-4">Smart folders</h2>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Link to="/files?type=image" className="bg-white border rounded-xl p-4">
-              Images
-            </Link>
-            <Link to="/files?type=video" className="bg-white border rounded-xl p-4">
-              Videos
-            </Link>
-            <Link to="/files?type=document" className="bg-white border rounded-xl p-4">
-              Documents
-            </Link>
-            <Link to="/files" className="bg-white border rounded-xl p-4">
-              All files
-            </Link>
-          </div>
-        </div>
+        </section>
       </main>
 
-      {/* Toast */}
-      {toast && (
-       <div className="fixed bottom-6 right-6 bg-black text-white px-4 py-2 rounded-lg shadow-lg text-sm transition-opacity duration-300">
-       {toast}
-       </div>
-    )}
+      {/* Hidden input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={(e) => {
+          handleUpload(e.target.files[0]);
+          e.target.value = null;
+        }}
+      />
 
+      {/* Upload HUD */}
+      <AnimatePresence>
+        {uploading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 rounded-full bg-white border shadow-xl px-6 py-3 text-sm text-gray-700"
+          >
+            Uploading… {uploadProgress}%
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            className="fixed bottom-6 right-6 rounded-xl bg-blue-600 text-white px-4 py-2 text-sm shadow-lg"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ImagePreview
         files={previewFiles}
@@ -284,5 +231,18 @@ const previewFiles = files.filter(
         onClose={() => setPreviewFile(null)}
       />
     </>
+  );
+}
+
+/* ===== Small UI pieces ===== */
+
+function QuickLink({ to, label }) {
+  return (
+    <Link
+      to={to}
+      className="rounded-xl border border-gray-200/70 bg-white px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 transition"
+    >
+      {label}
+    </Link>
   );
 }

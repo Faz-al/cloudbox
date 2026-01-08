@@ -3,13 +3,25 @@ import { API_BASE } from "../utils/api";
 
 export default function FileGridItem({
   file,
+  selected,
+  onSelect,
   onPreview,
-  onRename,
   onOpenFolder,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const menuRef = useRef(null);
+  const longPressRef = useRef(null);
+  const [longPressed, setLongPressed] = useState(false);
 
+
+  const isImage = file.type?.startsWith("image");
+  const isVideo = file.type?.startsWith("video");
+  const isPdf = file.type?.includes("pdf");
+  const isZip =
+    file.type?.includes("zip") || file.type?.includes("rar");
+
+  /* Close menu */
   useEffect(() => {
     const close = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -20,127 +32,140 @@ export default function FileGridItem({
     return () => document.removeEventListener("click", close);
   }, []);
 
-  const openMenu = (e) => {
+  /* Long press (mobile) */
+  const startPress = (e) => {
+  setLongPressed(false);
+  longPressRef.current = setTimeout(() => {
+    setLongPressed(true);
+    setMenuPosition({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    });
+    setMenuOpen(true);
+  }, 500);
+};
+
+
+  const cancelPress = () => {
+    clearTimeout(longPressRef.current);
+  };
+
+  const openContext = (e) => {
     e.preventDefault();
+    setMenuPosition({ x: e.clientX, y: e.clientY });
     setMenuOpen(true);
   };
 
-  const handlePrimaryClick = () => {
-    if (menuOpen) return;
-
-    if (file.isFolder) {
-      onOpenFolder(file._id);
-      return;
-    }
-
-    onPreview(file);
-  };
-
-  const handleDownload = () => {
-    
-      window.open(`${API_BASE}/files/download/${file._id}`, "_blank");
-    setMenuOpen(false);
-  };
-
-  const isImage = file.type?.startsWith("image");
-
   return (
     <div
-      className="relative aspect-square bg-white border rounded-xl hover:shadow-md cursor-pointer"
+  className={`group relative w-full rounded-xl border bg-white cursor-pointer transition
+    aspect-[4/3] sm:aspect-square hover:shadow-sm
+    ${selected ? "ring-2 ring-blue-500" : ""}`}
 
-      onClick={handlePrimaryClick}
-      onContextMenu={openMenu}
+      onClick={() => {
+  if (longPressed) return;
+  file.isFolder ? onOpenFolder(file._id) : onPreview(file);
+}}
+
+      onContextMenu={openContext}
+      onTouchStart={startPress}
+      onTouchEnd={cancelPress}
+      onTouchMove={cancelPress}
     >
-      {file.isFolder ? (
-        <div
-          className="flex items-center justify-center h-full text-blue-600 text-4xl"
-          onContextMenu={openMenu}
-        >
-          📁
-        </div>
-      ) : isImage ? (
-        <img
-          src={`${API_BASE}/files/${file._id}/preview`}
-
-          alt={file.name}
-          className="object-cover w-full h-full"
-          draggable={false}
-          onClick={() => onPreview(file)}
-          onContextMenu={openMenu}
-        />
-      ) : (
-        <div className="flex items-center justify-center h-full px-2 text-center">
-        <span className="text-gray-400 text-xs truncate whitespace-nowrap max-w-full">
-        {file.name}
-        </span>
-        </div>
-
-      )}
-
-      <div className="absolute bottom-0 left-0 right-0 bg-white/90 px-2 py-1 text-xs">
-  <span className="block truncate whitespace-nowrap">
-    {file.name}
-  </span>
+      {/* Selection checkbox */}
+      <div
+  className="absolute top-2 left-2 z-10
+             opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+  onClick={(e) => {
+    e.stopPropagation();
+    onSelect();
+  }}
+  onTouchStart={(e) => {
+    e.stopPropagation();
+    onSelect();
+  }}
+>
+  <input type="checkbox" checked={selected} readOnly />
 </div>
 
 
+      {/* CONTENT */}
+      {file.isFolder ? (
+        <Center><FolderIcon /></Center>
+      ) : isImage ? (
+        <img
+          src={`${API_BASE}/files/${file._id}/preview`}
+          alt={file.name}
+          className="object-cover w-full h-full"
+        />
+      ) : isVideo ? (
+        <Center><VideoIcon /></Center>
+      ) : isPdf ? (
+        <Center><PdfIcon /></Center>
+      ) : isZip ? (
+        <Center><ZipIcon /></Center>
+      ) : (
+        <Center><FileIcon /></Center>
+      )}
 
+      {/* NAME */}
+      <div className="absolute bottom-0 inset-x-0 bg-white/90 px-2 py-0.5 text-[11px] sm:text-xs truncate">
+        {file.name}
+      </div>
 
+      {/* CONTEXT MENU */}
       {menuOpen && (
         <div
           ref={menuRef}
-          className="absolute right-2 top-2 z-50 bg-white border rounded-lg shadow-md text-sm w-40"
-          onClick={(e) => e.stopPropagation()}
+          className="fixed z-[9999] bg-white border rounded-lg shadow-lg text-sm w-40"
+          style={{ top: menuPosition.y, left: menuPosition.x }}
         >
-          {!file.isFolder && (
-            <button
-              onClick={() => {
-                onPreview(file);
-                setMenuOpen(false);
-              }}
-              className="block w-full px-4 py-2 hover:bg-gray-100 text-left"
-            >
-              Preview
-            </button>
-          )}
-
-          {!file.isFolder && (
-            <button
-              onClick={handleDownload}
-              className="block w-full px-4 py-2 hover:bg-gray-100 text-left"
-            >
-              Download
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              onRename(file);
-              setMenuOpen(false);
-            }}
-            className="block w-full px-4 py-2 hover:bg-gray-100 text-left"
+          <MenuItem onClick={() => onPreview(file)}>Preview</MenuItem>
+          <MenuItem
+            onClick={() =>
+              window.open(
+                `${API_BASE}/files/download/${file._id}`,
+                "_blank"
+              )
+            }
           >
-            Rename
-          </button>
-
-          {!file.isFolder && (
-            <button
-              onClick={() => {
-                alert(
-                  `File info\n\nName: ${file.name}\nSize: ${(
-                    file.size /
-                    (1024 * 1024)
-                  ).toFixed(2)} MB`
-                );
-                setMenuOpen(false);
-              }}
-              className="block w-full px-4 py-2 hover:bg-gray-100 text-left"
-            >
-              File info
-            </button>
-          )}
+            Download
+          </MenuItem>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---------- helpers ---------- */
+
+const Center = ({ children }) => (
+  <div className="flex items-center justify-center h-full">
+    {children}
+  </div>
+);
+
+const MenuItem = ({ children, onClick }) => (
+  <button
+    onClick={onClick}
+    className="block w-full px-4 py-2 text-left hover:bg-gray-100"
+  >
+    {children}
+  </button>
+);
+
+/* ---------- icons ---------- */
+
+const FolderIcon = () => <Icon color="text-blue-600" />;
+const FileIcon = () => <Icon />;
+const PdfIcon = () => <Icon label="PDF" color="text-red-600" />;
+const ZipIcon = () => <Icon label="ZIP" color="text-yellow-600" />;
+const VideoIcon = () => <Icon label="▶" color="text-purple-600" />;
+
+function Icon({ label, color = "text-gray-400" }) {
+  return (
+    <div className={`w-10 h-10 flex items-center justify-center font-semibold ${color}`}>
+      {label || "FILE"}
     </div>
   );
 }

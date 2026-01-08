@@ -24,12 +24,59 @@ const fileSchema = new mongoose.Schema(
       default: null,
     },
 
+      originalParent: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "File",
+  default: null,
+},
+
+    
+
     isFolder: {
       type: Boolean,
       default: false,
     },
+
+        // 🔽 TRASH (Recently Deleted)
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    isVaulted: {
+  type: Boolean,
+  default: false,
+  index: true,
+},
+
+vaultedAt: {
+  type: Date,
+  default: null,
+},
+
+vaultParent: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "File",
+  default: null,
+},
+
+
+
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model("File", fileSchema);
+

@@ -26,6 +26,20 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpires: {
       type: Date,
     },
+
+
+    vaultPinHash: {
+  type: String,
+  default: null,
+},
+
+vaultUnlockedAt: {
+  type: Date,
+  default: null,
+},
+
+
+
   },
   { timestamps: true }
 );

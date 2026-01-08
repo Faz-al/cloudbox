@@ -1,3 +1,13 @@
+/**
+ * AUTH MIDDLEWARE (DO NOT MODIFY CASUALLY)
+ * - Cookie-based JWT auth
+ * - Enforces tokenVersion for logout-everywhere
+ * - Used by /auth/me and all protected routes
+ * - remember fazal (very imp)
+ */  
+
+
+
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 

@@ -1,74 +1,108 @@
-import { API_BASE } from "../utils/api"
+import { API_BASE } from "../utils/api";
 
 export default function FileRow({
   file,
+  selected,
+  onSelect,
   onPreview,
   onDelete,
+  onRestore,
   onOpenFolder,
   onRename,
+  onVault,
+  onUnvault,
 }) {
   const handleDownload = () => {
     if (file.isFolder) return;
-
-    const url = `${API_BASE}/files/download/${file._id}`;
-
-    window.open(url, "_blank");
+    window.open(`${API_BASE}/files/download/${file._id}`, "_blank");
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b last:border-b-0">
-      {/* Left: name + size */}
-      <div className="flex items-center gap-3 min-w-0">
-        <span className="text-sm font-medium truncate">{file.name}</span>
+    <div className="group flex items-center justify-between px-6 py-3 text-sm hover:bg-gray-50 transition-colors">
+      {/* LEFT */}
+      <div
+        className="flex items-center gap-3 min-w-0 cursor-pointer"
+        onClick={() =>
+          file.isFolder ? onOpenFolder?.(file._id) : onPreview?.(file)
+        }
+      >
+
+      <input
+  type="checkbox"
+  checked={selected}
+  onClick={(e) => {
+    e.stopPropagation();
+    onSelect();
+  }}
+  readOnly
+  className={`transition ${
+    selected
+      ? "opacity-100"
+      : "opacity-0 group-hover:opacity-100"
+  }`}
+/>
+
+
+
+
+        <span className="font-medium text-gray-900 truncate">
+          {file.name}
+        </span>
 
         {!file.isFolder && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-400 shrink-0">
             {(file.size / (1024 * 1024)).toFixed(2)} MB
           </span>
         )}
       </div>
 
-      {/* Right: actions */}
-      <div className="flex items-center gap-3 shrink-0">
-        {file.isFolder ? (
-          <button
-            onClick={() => onOpenFolder(file._id)}
-            className="text-xs text-blue-600"
-          >
-            Open
-          </button>
-        ) : (
-          <button
-            onClick={() => onPreview(file)}
-            className="text-xs text-blue-600"
-          >
-            Preview
-          </button>
-        )}
-
+      {/* ACTIONS */}
+      <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         {!file.isFolder && (
-          <button
-            onClick={handleDownload}
-            className="text-xs text-green-600"
-          >
-            Download
-          </button>
+          <>
+            <Action onClick={() => onPreview?.(file)}>Preview</Action>
+            <Action onClick={handleDownload}>Download</Action>
+          </>
         )}
 
-        <button
-          onClick={() => onRename(file)}
-          className="text-xs text-gray-600"
-        >
-          Rename
-        </button>
+        {onRename && <Action onClick={() => onRename(file)}>Rename</Action>}
 
-        <button
-          onClick={() => onDelete(file._id)}
-          className="text-xs text-red-600"
-        >
-          Delete
-        </button>
+        {onVault && <Action onClick={() => onVault(file._id)}>Vault</Action>}
+
+        {onUnvault && (
+          <Action danger onClick={() => onUnvault(file._id)}>
+            Remove
+          </Action>
+        )}
+
+        {onRestore && (
+          <Action onClick={() => onRestore(file._id)}>Restore</Action>
+        )}
+
+        {onDelete && (
+          <Action danger onClick={() => onDelete(file._id)}>
+            {onRestore ? "Delete forever" : "Delete"}
+          </Action>
+        )}
       </div>
     </div>
+  );
+}
+
+function Action({ children, onClick, danger }) {
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={`text-xs ${
+        danger
+          ? "text-red-600 hover:text-red-800"
+          : "text-gray-600 hover:text-gray-900"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

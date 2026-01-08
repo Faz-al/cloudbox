@@ -1,10 +1,15 @@
 import { Routes, Route } from "react-router-dom";
 import { useState } from "react";
 
+
+
 import AccountSettings from "./pages/AccountSettings";
 import AppLayout from "./layouts/AppLayout";
 
 import SettingsSecurity from "./pages/SettingsSecurity";
+import Vault from "./pages/Vault";
+
+
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -90,11 +95,18 @@ export default function App() {
     element={<Files openPreview={openPreview} />}
   />
 
+  <Route path="/vault" element={<Vault />} />
+
+
+
   <Route path="/upgrade" element={<Upgrade />} />
 
   <Route path="/account" element={<AccountSettings />} />
-  
+
   <Route path="/settings/security" element={<SettingsSecurity />} />
+
+
+
 
 </Route>
 

@@ -1,3 +1,4 @@
+
 /**
  * STORAGE QUOTA ENFORCEMENT
  * - Uses user.usedStorage + user.storageLimit (for progress bar)
@@ -8,9 +9,12 @@
  */
 
 
+const AuditLog = require("../models/AuditLog");
+
+const bcrypt = require("bcryptjs");
+
 
 const fs = require("fs");
-
 const File = require("../models/File");
 const User = require("../models/User");
 const crypto = require("crypto");
@@ -22,10 +26,116 @@ const {
 } = require("@aws-sdk/client-s3");
 const s3 = require("../config/storage");
 
+
+
+const isVaultUnlocked = (user) => {
+  if (!user.vaultUnlockedAt) return false;
+  return Date.now() - user.vaultUnlockedAt.getTime() < 1000 * 60 * 30; // 30 min
+};
+
+const isVaultSetup = (user) => {
+  return (
+    typeof user.vaultPinHash === "string" &&
+    user.vaultPinHash.length > 20
+  );
+};
+
+
+
+
+
+const softDeleteRecursive = async (fileId, userId) => {
+  const file = await File.findOne({ _id: fileId, user: userId });
+  if (!file || file.isDeleted) return;
+
+  await File.updateOne(
+  { _id: file._id },
+  {
+    $set: {
+      isDeleted: true,
+      deletedAt: new Date(),
+      deletedBy: userId,
+      originalParent: file.parent ?? null,
+    },
+  }
+);
+
+await AuditLog.create({
+  user: userId,
+  file: file._id,
+  action: "deleted",
+});
+
+
+  if (file.isFolder) {
+    const children = await File.find({
+      parent: file._id,
+      user: userId,
+      isDeleted: false,
+    });
+
+    for (const child of children) {
+      await softDeleteRecursive(child._id, userId);
+    }
+  }
+};
+
+
+
+
+
+const permanentDeleteRecursive = async (fileId, userId) => {
+  const file = await File.findOne({ _id: fileId, user: userId });
+  if (!file) return;
+
+  // If folder → delete children first
+  if (file.isFolder) {
+    const children = await File.find({
+      parent: file._id,
+      user: userId,
+    });
+
+    for (const child of children) {
+      await permanentDeleteRecursive(child._id, userId);
+    }
+  }
+
+  // If file → delete physical object
+  if (!file.isFolder) {
+    try {
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.R2_BUCKET,
+          Key: file.key,
+        })
+      );
+
+      // update storage usage
+      const user = await User.findById(userId);
+      if (user) {
+        user.usedStorage = Math.max(0, user.usedStorage - (file.size || 0));
+        await user.save();
+      }
+    } catch (err) {
+      console.error("S3 DELETE ERROR:", err);
+    }
+  }
+
+  // remove DB record
+  await File.deleteOne({ _id: file._id });
+};
+
+
+
+
+
 /* ===== LIST FILES ===== */
+/* ===== LIST FILES ===== */
+
+
 const listFiles = async (req, res) => {
   try {
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.id;
     if (!userId) return res.status(401).end();
 
     const parent =
@@ -35,14 +145,20 @@ const listFiles = async (req, res) => {
 
     const files = await File.find({
       user: userId,
-      parent,
+      isDeleted: false,
+      isVaulted: false,
+
+      parent: parent,
     }).sort({ isFolder: -1, createdAt: -1 });
 
     res.json(files);
-  } catch {
+  } catch (err) {
+    console.error("LIST FILES ERROR:", err);
     res.status(500).json({ message: "Failed to list files" });
   }
 };
+
+
 
 /* ===== PREVIEW FILE ===== */
 const previewFile = async (req, res) => {
@@ -177,42 +293,45 @@ const downloadFile = async (req, res) => {
 };
 
 /* ===== DELETE FILE ===== */
-/* ===== DELETE FILE ===== */
+/* ===== DELETE FILE (SOFT → TRASH) ===== */
+
+/* ===== DELETE FILE (SOFT → TRASH) ===== */
 const deleteFile = async (req, res) => {
   try {
+    // 🛑 guard: block non-objectId like "trash"
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid file id" });
+    }
+
     const userId = req.user?.id || req.user?._id;
     if (!userId) return res.status(401).end();
 
     const file = await File.findOne({
       _id: req.params.id,
       user: userId,
+      $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }],
     });
 
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
 
-    await s3.send(
-      new DeleteObjectCommand({
-        Bucket: process.env.R2_BUCKET,
-        Key: file.key,
-      })
-    );
+    await softDeleteRecursive(file._id, userId);
 
-    const user = await User.findById(userId);
-    if (user) {
-      user.usedStorage = Math.max(0, user.usedStorage - file.size);
-      await user.save();
-    }
+    // 🔥 ensure DB write is flushed
+    await File.findOne({ _id: file._id });
 
-    await file.deleteOne();
+    res.json({ message: "Moved to trash" });
 
-    res.json({ message: "File deleted" });
+
+    
   } catch (err) {
-    console.error("DELETE ERROR:", err);
-    res.status(500).json({ message: "Delete failed" });
+    console.error("TRASH ERROR:", err);
+    res.status(500).json({ message: "Trash failed" });
   }
 };
+
+
 
 /* ===== RENAME FILE ===== */
 const renameFile = async (req, res) => {
@@ -262,6 +381,327 @@ const createFolder = async (req, res) => {
   res.status(201).json(folder);
 };
 
+
+/* ===== LIST TRASH ===== */
+
+
+
+
+
+/* ===== DELETE FOREVER (PERMANENT) ===== */
+const deleteForever = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).end();
+
+    const file = await File.findOne({
+      _id: req.params.id,
+      user: userId,
+      isDeleted: true,
+    });
+
+    if (!file) {
+      return res.status(404).json({ message: "Item not found in trash" });
+    }
+
+    await permanentDeleteRecursive(file._id, userId);
+
+    res.json({ message: "Deleted permanently" });
+  } catch (err) {
+    console.error("PERMANENT DELETE ERROR:", err);
+    res.status(500).json({ message: "Permanent delete failed" });
+  }
+};
+
+
+
+
+/* RestorefromTrash  */
+
+const restoreFromTrash = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).end();
+
+    const file = await File.findOne({
+      _id: req.params.id,
+      user: userId,
+      isDeleted: true,
+    });
+
+    if (!file) {
+      return res.status(404).json({ message: "Not found in trash" });
+    }
+
+    const parentExists = file.originalParent
+      ? await File.exists({ _id: file.originalParent, isDeleted: false })
+      : true;
+
+    await File.updateOne(
+      { _id: file._id },
+      {
+        $set: {
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null,
+          parent: parentExists ? file.originalParent : null,
+          originalParent: null,
+        },
+      }
+    );
+
+    await AuditLog.create({
+      user: userId,
+      file: file._id,
+      action: "restored",
+    });
+
+    res.json({ message: "Restored" });
+  } catch (err) {
+    res.status(500).json({ message: "Restore failed" });
+  }
+};
+
+
+/* List Trash  */
+
+const listTrash = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).end();
+
+    const files = await File.find({
+      user: userId,
+      isDeleted: true,
+    }).sort({ deletedAt: -1 });
+
+    res.json(files);
+  } catch (err) {
+    console.error("TRASH LIST ERROR:", err);
+    res.status(500).json({ message: "Failed to fetch trash" });
+  }
+};
+
+
+/* Vault Controller */
+
+const setupVaultPin = async (req, res) => {
+  const userId = req.user?.id;
+  const { pin } = req.body;
+
+  if (!pin || pin.length < 4) {
+    return res.status(400).json({ message: "Invalid PIN" });
+  }
+
+  const user = await User.findById(userId);
+
+  if (isVaultSetup(user)) {
+    return res.status(400).json({ message: "Vault already setup" });
+  }
+
+  const hash = await bcrypt.hash(pin, 10);
+  user.vaultPinHash = hash;
+
+  // ❌ DO NOT unlock here
+  user.vaultUnlockedAt = null;
+
+  await user.save();
+  res.json({ message: "Vault PIN set" });
+};
+
+
+
+
+
+const unlockVault = async (req, res) => {
+  const userId = req.user?.id;
+  const { pin } = req.body;
+
+  const user = await User.findById(userId);
+
+  if (!isVaultSetup(user)) {
+    return res.status(400).json({ message: "Vault not set" });
+  }
+
+  const ok = await bcrypt.compare(pin, user.vaultPinHash);
+  if (!ok) {
+    return res.status(401).json({ message: "Incorrect PIN" });
+  }
+
+  user.vaultUnlockedAt = new Date();
+  await user.save();
+
+  res.json({ message: "Vault unlocked" });
+};
+
+
+
+const vaultFile = async (req, res) => {
+  const userId = req.user?.id;
+  const user = await User.findById(userId);
+
+  if (!isVaultUnlocked(user)) {
+    return res.status(403).json({ message: "Vault locked" });
+  }
+
+
+  const file = await File.findOne({
+    _id: req.params.id,
+    user: userId,
+    isDeleted: false,
+  });
+
+  if (!file) return res.status(404).end();
+
+  await File.updateOne(
+    { _id: file._id },
+    {
+      $set: {
+        isVaulted: true,
+        vaultedAt: new Date(),
+        vaultParent: file.parent,
+        parent: null,
+      },
+    }
+  );
+
+  res.json({ message: "Moved to vault" });
+};
+
+
+const unvaultFile = async (req, res) => {
+  const userId = req.user?.id;
+  const user = await User.findById(userId);
+
+  if (!isVaultUnlocked(user)) {
+    return res.status(403).json({ message: "Vault locked" });
+  }
+
+  const file = await File.findOne({
+    _id: req.params.id,
+    user: userId,
+    isVaulted: true,
+  });
+
+  if (!file) return res.status(404).end();
+
+  await File.updateOne(
+    { _id: file._id },
+    {
+      $set: {
+        isVaulted: false,
+        parent: file.vaultParent,
+        vaultParent: null,
+        vaultedAt: null,
+      },
+    }
+  );
+
+  res.json({ message: "Removed from vault" });
+};
+
+
+
+const listVault = async (req, res) => {
+  const userId = req.user?.id;
+  const user = await User.findById(userId);
+
+  // 🔥 Vault NOT SET
+ if (!isVaultSetup(user)) {
+  return res.status(400).json({ message: "Vault not set" });
+}
+
+if (!isVaultUnlocked(user)) {
+  return res.status(403).json({ message: "Vault locked" });
+}
+
+  const files = await File.find({
+    user: userId,
+    isVaulted: true,
+    isDeleted: false,
+  }).sort({ vaultedAt: -1 });
+
+  res.json(files);
+};
+
+
+
+
+
+
+/* Bulk Delete Fn */
+
+const emptyTrash = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).end();
+
+    const files = await File.find({
+      user: userId,
+      isDeleted: true,
+    });
+
+    for (const file of files) {
+      await permanentDeleteRecursive(file._id, userId);
+    }
+
+    await AuditLog.create({
+      user: userId,
+      action: "empty_trash",
+      meta: { count: files.length },
+    });
+
+    res.json({ message: "Trash emptied" });
+  } catch (err) {
+    res.status(500).json({ message: "Empty trash failed" });
+  }
+};
+
+
+
+/*  desiabled now/ if needs auto unlocck on refresh in future
+        case study(enable)
+
+const getVaultStatus = async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  if (!user.vaultPinHash) {
+    return res.json({ status: "not_set" });
+  }
+
+  if (!isVaultUnlocked(user)) {
+    return res.json({ status: "locked" });
+  }
+
+  res.json({ status: "unlocked" });
+}; 
+
+
+*/ 
+
+const getVaultStatus = async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  if (!user.vaultPinHash) {
+    return res.json({ status: "not_set" });
+  }
+
+  // 🔒 ALWAYS lock on page load
+  user.vaultUnlockedAt = null;
+  await user.save();
+
+  return res.json({ status: "locked" });
+};
+
+
+
+
+
+
+
+
+
+
 module.exports = {
   listFiles,
   uploadFile,
@@ -270,4 +710,16 @@ module.exports = {
   deleteFile,
   renameFile,
   createFolder,
+  listTrash,
+  deleteForever,
+  restoreFromTrash,
+  emptyTrash, 
+  setupVaultPin,
+  unlockVault,
+  vaultFile,
+  unvaultFile,
+  listVault,
+  getVaultStatus,
 };
+
+

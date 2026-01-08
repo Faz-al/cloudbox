@@ -1,5 +1,6 @@
 export const API_BASE =
-  "https://cloudbox-xgao.onrender.com/api";
+  process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 
 
 
@@ -77,8 +78,9 @@ export const uploadFile = async (file, parent = null) => {
 };
 
 
-export const deleteFile = (id) =>
+export const moveToTrash = (id) =>
   apiFetch(`/files/${id}`, { method: "DELETE" });
+
 
 export const renameFile = (id, name) =>
   apiFetch(`/files/${id}/rename`, {
@@ -92,3 +94,43 @@ export const renameFile = (id, name) =>
     method: "POST",
     body: JSON.stringify({ name, parent }),
   });
+
+
+
+
+  /* ===== VAULT ===== */
+/* ===== VAULT ===== */
+export const setupVaultPin = (pin) =>
+  apiFetch("/files/vault/setup", {
+    method: "POST",
+    body: JSON.stringify({ pin }),
+  });
+
+export const unlockVault = (pin) =>
+  apiFetch("/files/vault/unlock", {
+    method: "POST",
+    body: JSON.stringify({ pin }),
+  });
+
+export const getVaultFiles = () =>
+  apiFetch("/files/vault");
+
+
+
+export const unvaultFile = (id) =>
+  apiFetch(`/files/vault/${id}`, {
+    method: "DELETE",
+  });
+
+
+export const getVaultStatus = () =>
+  apiFetch("/files/vault/status");
+
+
+export const vaultFile = (id) =>
+  apiFetch(`/files/vault/${id}`, {
+    method: "POST",
+  });
+
+
+

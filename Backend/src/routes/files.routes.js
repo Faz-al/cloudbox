@@ -31,31 +31,62 @@ const {
   previewFile,
   deleteFile,
   renameFile,
-  createFolder, // ✅ IMPORT MISSING
+  createFolder,
+  listTrash,
+  deleteForever,
+  restoreFromTrash,
+  emptyTrash,
+  setupVaultPin,
+  unlockVault,
+  vaultFile,
+  unvaultFile,
+  listVault,
+  getVaultStatus,
+
 } = require("../controllers/files.controller");
 
-/* AUTH */
+//* AUTH */
 router.use(authMiddleware);
 
-/* LIST FILES (supports ?parent=) */
+/* ===== TRASH ROUTES (MUST BE FIRST) ===== */
+router.get("/trash", listTrash);
+router.post("/trash/:id/restore", restoreFromTrash);
+router.delete("/trash/:id/permanent", deleteForever);
+router.delete("/trash", emptyTrash);
+router.get("/vault/status", getVaultStatus);
+
+
+
+/* ===== FILE LIST ===== */
 router.get("/", listFiles);
 
-/* UPLOAD FILE */
+/* ===== CREATE ===== */
 router.post("/upload", upload.single("file"), uploadFile);
-
-/* CREATE FOLDER — MUST BE BEFORE :id ROUTES */
 router.post("/folder", createFolder);
 
-/* RENAME FILE / FOLDER */
+/* ===== FILE ACTIONS ===== */
 router.patch("/:id/rename", renameFile);
-
-/* PREVIEW */
 router.get("/:id/preview", previewFile);
-
-/* DOWNLOAD */
 router.get("/download/:id", downloadFile);
-
-/* DELETE */
 router.delete("/:id", deleteFile);
+
+
+/* Valut actions */
+
+router.get("/vault/status", getVaultStatus);
+router.get("/vault", listVault);
+router.post("/vault/setup", setupVaultPin);
+router.post("/vault/unlock", unlockVault);
+router.post("/vault/:id", vaultFile);
+router.delete("/vault/:id", unvaultFile);
+
+
+
+
+
+
+
+
+
 
 module.exports = router;

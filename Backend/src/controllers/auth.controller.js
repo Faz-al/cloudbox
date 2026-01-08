@@ -241,14 +241,12 @@ const changePassword = async (req, res) => {
 
 
 /* ================= LOGOUT ================= */
+/* ================= LOGOUT ================= */
 const logout = (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
+  res.clearCookie("token", cookieOptions);
   res.json({ message: "Logged out" });
 };
+
 
 
 

@@ -1,5 +1,5 @@
 export const API_BASE =
-  process.env.REACT_APP_API_URL || "https://cloudbox-xgao.onrender.com";
+  process.env.REACT_APP_API_URL || "https://cloudbox-xgao.onrender.com/api";
 
 
 

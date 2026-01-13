@@ -1,5 +1,6 @@
 export const API_BASE =
-  process.env.REACT_APP_API_URL || "https://cloudbox-xgao.onrender.com/api";
+  (process.env.REACT_APP_API_URL || "http://localhost:5000") + "/api";
+
 
 
 
@@ -13,14 +14,22 @@ const apiFetch = async (url, options = {}) => {
     ...options,
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
 
-  if (!res.ok) {
-    throw new Error(data.message || "Request failed");
-  }
+  // 🔒 Hard block suspended users
+  
+
+ if (!res.ok) {
+  const err = new Error(data.message || "Request failed");
+  err.status = res.status;
+  err.data = data;
+  throw err;
+}
+
 
   return data;
 };
+
 
 /* ===== AUTH ===== */
 export const signup = (email, password) =>
@@ -134,3 +143,14 @@ export const vaultFile = (id) =>
 
 
 
+
+/* ===== VIEWER ACCESS (PHASE 3) ===== */
+
+export const checkViewerAccess = (fileId) =>
+  apiFetch(`/viewer/access/${fileId}`);
+
+export const grantViewerAccess = (fileId, tier) =>
+  apiFetch("/viewer/grant", {
+    method: "POST",
+    body: JSON.stringify({ fileId, tier }),
+  });

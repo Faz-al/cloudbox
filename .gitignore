@@ -1,6 +1,7 @@
-Frontend/node_modules
-Backend/node_modules
-/dist
-.npmignore
-Backend/.env
 .env
+.env.local
+.env.production
+node_modules/
+dist/
+build/
+.DS_Store

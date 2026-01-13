@@ -1,4 +1,15 @@
+
+const dmcaRoutes = require("./routes/dmca.routes");
+const adminDmcaRoutes = require("./routes/admin.dmca.routes");
+
+const authMiddleware = require("./middleware/auth.middleware");
+const securityTracker = require("./middleware/securityTracker");
+
+
+
+
 console.log("🔥 THIS SERVER FILE IS RUNNING");
+
 
 require("dotenv").config();
 
@@ -10,14 +21,29 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
 const connectDB = require("./config/db");
+const viewerRoutes = require("./routes/viewer.routes");
+
 const authRoutes = require("./routes/auth.routes");
 const fileRoutes = require("./routes/files.routes");
 
+const paymentRoutes = require("./routes/payment.routes");
+
+const adminAuthRoutes = require("./routes/admin.auth.routes");
+const adminRoutes = require("./routes/admin.routes");
+
+
+
+
+
+
 const app = express();
+app.set("etag", false);
+
 
 /* ===== CORS (COOKIE SAFE) ===== */
 const allowedOrigins = [
   "http://localhost:3000",
+  "http://localhost:5173",
   "https://cloudbox-frontend-n6gf.onrender.com",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
@@ -39,12 +65,29 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+
+
 /* ===== DB ===== */
 connectDB();
 
 /* ===== API ROUTES ===== */
 app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes);
+app.use("/api/viewer", viewerRoutes);
+app.use("/api/payment", paymentRoutes);
+
+app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/api/admin", adminRoutes);
+
+
+
+app.use("/api/dmca", dmcaRoutes);
+app.use("/api/admin/dmca", adminDmcaRoutes);
+
+
+app.use("/api/auth/me", authMiddleware, securityTracker);
+app.use("/api/files", authMiddleware, securityTracker);
+
 
 /* ===== HEALTH CHECK ===== */
 app.get("/", (req, res) => {

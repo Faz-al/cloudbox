@@ -31,6 +31,12 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: "Session expired" });
     }
 
+    if (user.isSuspended) {
+  return res.status(403).json({ message: "Account suspended" });
+}
+
+
+
     req.user = { id: user._id };
     next();
   } catch (err) {

@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 
 const authMiddleware = require("../middleware/auth.middleware");
+const securityTracker = require("../middleware/securityTracker");
 
 
 const os = require("os");
@@ -42,11 +43,42 @@ const {
   unvaultFile,
   listVault,
   getVaultStatus,
+  shareFile,
+  getSharedFile,
+  getSharedFileInfo,
+  previewSharedFile,
+  getShareStatus,
+  toggleShare,
+
+
 
 } = require("../controllers/files.controller");
 
+
+/* ===== PUBLIC SHARE VIEW ===== */
+router.get("/public/view/:token", getSharedFile);
+router.get("/public/info/:token", getSharedFileInfo);
+router.get("/public/preview/:token", previewSharedFile);
+
+
+
+
+
+
+
+
 //* AUTH */
-router.use(authMiddleware);
+router.use(authMiddleware, securityTracker);
+
+
+/* ===== SHARE FILE ===== */
+router.post("/:id/share", shareFile);
+router.get("/:id/share/status", getShareStatus);
+router.post("/:id/share/toggle", toggleShare);
+
+
+
+
 
 /* ===== TRASH ROUTES (MUST BE FIRST) ===== */
 router.get("/trash", listTrash);
@@ -54,6 +86,8 @@ router.post("/trash/:id/restore", restoreFromTrash);
 router.delete("/trash/:id/permanent", deleteForever);
 router.delete("/trash", emptyTrash);
 router.get("/vault/status", getVaultStatus);
+
+
 
 
 
@@ -69,6 +103,10 @@ router.patch("/:id/rename", renameFile);
 router.get("/:id/preview", previewFile);
 router.get("/download/:id", downloadFile);
 router.delete("/:id", deleteFile);
+
+
+
+
 
 
 /* Valut actions */

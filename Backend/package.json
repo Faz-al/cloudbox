@@ -1,8 +1,4 @@
-
-
-
 {
-  
   "name": "cloudbox-backend",
   "version": "1.0.0",
   "main": "src/server.js",
@@ -20,7 +16,9 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.1.1",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "razorpay": "^2.9.6",
+    "ua-parser-js": "^2.0.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.3"

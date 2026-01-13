@@ -4,7 +4,8 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, suspended } = useAuth();
+
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -61,6 +62,19 @@ export default function Login() {
               <span>🛡️ Private</span>
               <span>☁️ CloudBox</span>
             </div>
+
+
+
+            {suspended && (
+  <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
+    Your account has been suspended by CloudBox. Please contact support.
+  </div>
+)}
+
+
+
+
+
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <input

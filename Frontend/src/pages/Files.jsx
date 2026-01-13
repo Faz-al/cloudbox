@@ -24,6 +24,7 @@ export default function Files() {
   const folderFromURL = searchParams.get("folder");
   const filterType = searchParams.get("type");
 
+
   const fileInputRef = useRef(null);
 
   /* ---------------- NAV STATE ---------------- */
@@ -36,8 +37,16 @@ export default function Files() {
   );
 
   const currentFolder = history[historyIndex];
+  const [confirm, setConfirm] = useState(null);
+
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+
+  const [uploading, setUploading] = useState(false);
+const [uploadProgress, setUploadProgress] = useState(0);
+
+const [uploadError, setUploadError] = useState("");
 
 
   /* ---------------- UI STATE ---------------- */
@@ -186,19 +195,107 @@ useEffect(() => {
 
   /* ---------------- ACTIONS ---------------- */
 
-  const handleFileSelected = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const handleFileSelected = (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
 
-  await uploadFile(file, currentFolder);
+  let index = 0;
 
+  const uploadNext = () => {
+    if (index >= files.length) {
+      setUploading(false);
+      setUploadProgress(0);
+      reloadFiles();
+      return;
+    }
+
+    const file = files[index++];
+    uploadSingleFile(file, uploadNext);
+  };
+
+  uploadNext();
   e.target.value = null;
+};
 
+
+const reloadFiles = async () => {
   const data = await getFiles(
     currentFolder ? `?parent=${currentFolder}` : ""
   );
   setFiles(data);
 };
+
+const uploadSingleFile = (file, onDone) => {
+  const xhr = new XMLHttpRequest();
+  const formData = new FormData();
+
+  formData.append("file", file);
+  if (currentFolder) formData.append("parent", currentFolder);
+
+  xhr.upload.onprogress = (e) => {
+    if (!e.lengthComputable) return;
+
+    const raw = e.loaded / e.total;
+    const eased = Math.min(raw * 85, 85);
+    setUploadProgress(Math.round(eased));
+  };
+
+  xhr.onloadstart = () => {
+    setUploading(true);
+    setUploadProgress(0);
+  };
+
+  xhr.onload = async () => {
+  if (xhr.status < 200 || xhr.status >= 300) {
+    setUploading(false);
+    setUploadProgress(0);
+    setUploadError("Upload failed (storage full or file rejected)");
+    return;
+  }
+
+  let p = 85;
+
+  const tick = setInterval(() => {
+    p += Math.random() * 3;
+    if (p >= 98) {
+      p = 98;
+      clearInterval(tick);
+    }
+    setUploadProgress(Math.round(p));
+  }, 120);
+
+  await new Promise((r) => setTimeout(r, 600));
+
+  clearInterval(tick);
+  setUploadProgress(100);
+
+  setTimeout(() => {
+    setUploadError("");
+    onDone();
+  }, 400);
+};
+
+
+  xhr.onerror = () => {
+  setUploading(false);
+  setUploadProgress(0);
+  setUploadError("Network error during upload");
+};
+
+
+  xhr.open("POST", `${API_BASE}/files/upload`);
+  xhr.withCredentials = true;
+  xhr.send(formData);
+};
+
+
+
+
+
+
+
+
+
 
 
   const handleDelete = async (id) => {
@@ -226,6 +323,111 @@ const deleteForever = async (id) => {
   });
   setFiles((prev) => prev.filter((f) => f._id !== id));
 };
+
+
+
+
+const selectedIds = Array.from(selected);
+
+const clearSelection = () => setSelected(new Set());
+
+const selectAll = () => {
+  const allowed = filteredFiles.filter(f => {
+    if (mode === "files") return !f.isFolder; // only files can be bulk-vaulted
+    return true; // trash allows everything
+  });
+
+  setSelected(new Set(allowed.map(f => f._id)));
+};
+
+
+const selectedFiles = filteredFiles.filter(f => selected.has(f._id));
+const hasFolders = selectedFiles.some(f => f.isFolder);
+
+
+
+const bulkDelete = () => {
+  setConfirm({
+    title: `Delete ${selectedIds.length} files?`,
+    message: "These files will be moved to Trash.",
+    action: async () => {
+      for (const id of selectedIds) {
+        await moveToTrash(id);
+      }
+
+      const data = await getFiles(
+        currentFolder ? `?parent=${currentFolder}` : ""
+      );
+      setFiles(data);
+      clearSelection();
+      setConfirm(null);
+    },
+  });
+};
+
+
+const bulkVault = () => {
+  setConfirm({
+    title: `Move ${selectedIds.length} files to Vault?`,
+    message: "These files will be hidden and protected by your vault PIN.",
+    action: async () => {
+      for (const id of selectedIds) {
+        await vaultFile(id);
+      }
+
+      setFiles(prev => prev.filter(f => !selected.has(f._id)));
+      clearSelection();
+      setConfirm(null);
+    },
+  });
+};
+
+
+const bulkRestore = async () => {
+  for (const id of selectedIds) {
+    await fetch(`${API_BASE}/files/trash/${id}/restore`, {
+      method: "POST",
+      credentials: "include",
+    });
+  }
+
+  setFiles(prev => prev.filter(f => !selected.has(f._id)));
+  clearSelection();
+};
+
+const bulkDeleteForever = () => {
+  setConfirm({
+    title: `Permanently delete ${selectedIds.length} files?`,
+    message: "This cannot be undone.",
+    action: async () => {
+      for (const id of selectedIds) {
+        await fetch(`${API_BASE}/files/trash/${id}/permanent`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+      }
+
+      setFiles(prev => prev.filter(f => !selected.has(f._id)));
+      clearSelection();
+      setConfirm(null);
+    },
+  });
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -383,11 +585,14 @@ const deleteForever = async (id) => {
               </button>
 
               <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleFileSelected}
+              type="file"
+              ref={fileInputRef}
+              multiple
+              className="hidden"
+              onChange={handleFileSelected}
               />
+
+
 
               <button
                 onClick={() => fileInputRef.current.click()}
@@ -441,6 +646,87 @@ const deleteForever = async (id) => {
     Grid
   </button>
 </div>
+
+
+
+
+          {selected.size > 0 && (
+<div className="mb-4 p-3 bg-white/80 backdrop-blur border border-gray-200 rounded-xl shadow-sm flex flex-wrap items-center justify-between gap-3">
+    <div className="text-sm font-medium text-gray-700">
+
+      {selected.size} selected
+    </div>
+
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={selectAll}
+        className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50"
+      >
+        Select all
+      </button>
+
+      <button
+        onClick={clearSelection}
+        className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-600"
+      >
+        Clear
+      </button>
+
+      {mode === "files" && (
+        <>
+          <button
+  onClick={bulkVault}
+  disabled={hasFolders}
+  className={`px-3 py-1.5 text-sm rounded-md border transition
+    ${
+      hasFolders
+        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+        : "bg-gray-900 text-white border-gray-900 hover:bg-gray-800"
+    }
+  `}
+>
+  Move to Vault
+</button>
+
+
+
+          <button
+            onClick={bulkDelete}
+            className="px-3 py-1.5 text-sm rounded-md border border-red-300 text-red-600 hover:bg-red-50"
+          >
+            Delete
+          </button>
+        </>
+      )}
+
+      {mode === "trash" && (
+        <>
+          <button
+            onClick={bulkRestore}
+            className="px-3 py-1.5 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Restore
+          </button>
+
+          <button
+            onClick={bulkDeleteForever}
+            className="px-3 py-1.5 text-sm rounded-md border border-red-300 text-red-600 hover:bg-red-50"
+          >
+            Delete Forever
+          </button>
+        </>
+      )}
+    </div>
+  </div>
+)}
+
+
+
+
+
+    
+
+
 
 
 
@@ -500,10 +786,77 @@ const deleteForever = async (id) => {
 />
 
                 ))}
+
+
+
+                
               </div>
             )}
+
+
+
+            
           </div>
+
+
+
+            {uploading && (
+  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white border shadow-xl rounded-full px-6 py-3 text-sm text-gray-700 z-50">
+    Uploading… {uploadProgress}%
+  </div>
+)}
+
+{uploadError && (
+  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-600 text-white px-5 py-2 rounded-lg text-sm shadow-xl z-50">
+    {uploadError}
+  </div>
+)}
+
+
+
+
+
+
+
+
+
+
         </main>
+
+              {confirm && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-5">
+      <h3 className="text-lg font-semibold mb-2">
+        {confirm.title}
+      </h3>
+
+      <p className="text-sm text-gray-600 mb-5">
+        {confirm.message}
+      </p>
+
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setConfirm(null)}
+          className="px-4 py-2 text-sm border rounded hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={confirm.action}
+          className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+
       </div>
 
       <ImagePreview

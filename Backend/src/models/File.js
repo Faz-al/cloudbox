@@ -17,27 +17,23 @@ const fileSchema = new mongoose.Schema(
 
     key: { type: String, required: true, unique: true },
 
-    // 🔽 NEW
     parent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "File",
       default: null,
     },
 
-      originalParent: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "File",
-  default: null,
-},
-
-    
+    originalParent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "File",
+      default: null,
+    },
 
     isFolder: {
       type: Boolean,
       default: false,
     },
 
-        // 🔽 TRASH (Recently Deleted)
     isDeleted: {
       type: Boolean,
       default: false,
@@ -56,21 +52,57 @@ const fileSchema = new mongoose.Schema(
     },
 
     isVaulted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    vaultedAt: {
+      type: Date,
+      default: null,
+    },
+
+    vaultParent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "File",
+      default: null,
+    },
+
+    /* ======================
+       PUBLIC SHARING (PHASE 1)
+       ====================== */
+    isShared: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+
+    shareEnabled: {
   type: Boolean,
-  default: false,
+  default: true,
   index: true,
 },
 
-vaultedAt: {
-  type: Date,
-  default: null,
-},
 
-vaultParent: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "File",
-  default: null,
-},
+
+    shareToken: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
+
+
+  shareEnabled: {
+  type: Boolean,
+  default: true,
+  index: true,
+  },
+
+
+
+
 
 
 
@@ -79,4 +111,3 @@ vaultParent: {
 );
 
 module.exports = mongoose.model("File", fileSchema);
-

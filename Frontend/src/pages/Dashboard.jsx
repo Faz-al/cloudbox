@@ -58,9 +58,13 @@ export default function Dashboard() {
     if (lastFolder) formData.append("parent", lastFolder);
 
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable)
-        setUploadProgress(Math.round((e.loaded / e.total) * 100));
-    };
+  if (!e.lengthComputable) return;
+
+  const raw = e.loaded / e.total;
+  const eased = Math.min(raw * 85, 85); // cap upload phase at 85%
+  setUploadProgress(Math.round(eased));
+};
+
 
     xhr.onloadstart = () => {
       setUploading(true);
@@ -68,20 +72,37 @@ export default function Dashboard() {
     };
 
     xhr.onload = async () => {
-      setUploading(false);
+  // smooth fake server processing
+  let p = 85;
 
-      if (xhr.status >= 200 && xhr.status < 300) {
-        setToast("Upload complete");
-        await loadFiles();
-      } else {
-        setToast("Upload failed");
-      }
+  const tick = setInterval(() => {
+    p += Math.random() * 3;
+    if (p >= 98) {
+      p = 98;
+      clearInterval(tick);
+    }
+    setUploadProgress(Math.round(p));
+  }, 120);
 
-      setTimeout(() => {
-        setToast("");
-        setUploadProgress(0);
-      }, 2200);
-    };
+  await new Promise(r => setTimeout(r, 600));
+
+  clearInterval(tick);
+  setUploadProgress(100);
+  setUploading(false);
+
+  if (xhr.status >= 200 && xhr.status < 300) {
+    setToast("Upload complete");
+    await loadFiles();
+  } else {
+    setToast("Upload failed");
+  }
+
+  setTimeout(() => {
+    setToast("");
+    setUploadProgress(0);
+  }, 2000);
+};
+
 
     xhr.open("POST", `${API_BASE}/files/upload`);
     xhr.withCredentials = true;
@@ -90,19 +111,47 @@ export default function Dashboard() {
 
   return (
     <>
-      <main className="max-w-7xl mx-auto px-8 py-14 space-y-16">
+
+
+
+
+
+      {/* ===== Workspace Header ===== */}
+{/* ===== Page Header ===== */}
+{/* ===== Page Header ===== */}
+<div className="max-w-7xl mx-auto px-8">
+  <div className="flex items-center justify-between border-b border-gray-200/60 pb-5">
+    <div>
+      <h1 className="text-lg font-medium text-gray-900">
+        Dashboard
+      </h1>
+      <p className="text-sm text-gray-400 mt-0.5">
+        Your private CloudBox vault
+      </p>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <main className="max-w-7xl mx-auto px-8 py-8 space-y-12">
+
+
         {/* ===== HERO ===== */}
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="space-y-2"
-        >
-          <h1 className="text-4xl font-semibold tracking-tight text-gray-900">
-            Welcome back
-          </h1>
-          <p className="text-sm text-gray-500">{user?.email}</p>
-        </motion.section>
+        
 
         {/* ===== PRIMARY PANEL ===== */}
         <motion.section
@@ -188,14 +237,17 @@ export default function Dashboard() {
 
       {/* Hidden input */}
       <input
-        ref={fileInputRef}
-        type="file"
-        className="hidden"
-        onChange={(e) => {
-          handleUpload(e.target.files[0]);
-          e.target.value = null;
-        }}
-      />
+  ref={fileInputRef}
+  type="file"
+  multiple
+  className="hidden"
+  onChange={(e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => handleUpload(file));
+    e.target.value = null;
+  }}
+/>
+
 
       {/* Upload HUD */}
       <AnimatePresence>

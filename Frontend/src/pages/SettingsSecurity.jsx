@@ -1,31 +1,51 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ChangePasswordCard from "../components/security/ChangePasswordCard";
 import ActiveSessionsCard from "../components/security/ActiveSessionsCard";
 import LogoutEverywhereCard from "../components/security/LogoutEverywhereCard";
 
 export default function SettingsSecurity() {
-  const [sessions] = useState([
-    {
-      id: "1",
-      device: "Chrome on Windows",
-      ip: "103.xxx.xxx.xxx",
-      location: "Bengaluru, India",
-      lastActive: "2 minutes ago",
-      isCurrent: true,
-    },
-    {
-      id: "2",
-      device: "Safari on iPhone",
-      ip: "172.xxx.xxx.xxx",
-      location: "Unknown",
-      lastActive: "Yesterday",
-      isCurrent: false,
-    },
-  ]);
+  const [sessions, setSessions] = useState([]);
+
+  const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  useEffect(() => {
+    fetch(`${API}/api/auth/security/sessions`, {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then(setSessions);
+  }, [API]);
+
+  const formattedSessions = sessions.map((s) => ({
+    id: s._id,
+    device: `${s.browser} on ${s.os}`,
+    ip: s.ip,
+    location: s.location,
+    lastActive: new Date(s.lastSeen).toLocaleString(),
+    isCurrent: s.isCurrent,
+    isSuspicious: s.isSuspicious,
+  }));
+
+  const logoutDevice = (id) => {
+    fetch(`${API}/api/auth/security/sessions/${id}/logout`, {
+      method: "POST",
+      credentials: "include",
+    }).then(() => {
+      setSessions((s) => s.filter((x) => x._id !== id));
+    });
+  };
+
+  const logoutOthers = () => {
+    fetch(`${API}/api/auth/security/logout-others`, {
+      method: "POST",
+      credentials: "include",
+    }).then(() => {
+      setSessions((s) => s.filter((x) => x.isCurrent));
+    });
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-10">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">
           Security & Privacy
@@ -36,16 +56,17 @@ export default function SettingsSecurity() {
         </p>
       </div>
 
-      {/* Password */}
       <ChangePasswordCard />
 
-      {/* Sessions */}
-      <ActiveSessionsCard sessions={sessions} />
+      <ActiveSessionsCard
+        sessions={formattedSessions}
+        onLogoutDevice={logoutDevice}
+      />
 
-      {/* Danger zone */}
+    
+
       <LogoutEverywhereCard />
 
-      {/* Footer note */}
       <div className="text-xs text-gray-400 pt-6 border-t">
         Last security review: <span className="font-medium">Just now</span>
       </div>

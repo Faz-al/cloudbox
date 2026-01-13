@@ -11,35 +11,55 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // 🔥 START TRUE
+  
+  const [suspended, setSuspended] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+  let cancelled = false;
 
-    const checkAuth = async () => {
-      try {
-        const data = await getMe();
-        if (cancelled) return;
+  // 🔓 DO NOT CHECK AUTH FOR PUBLIC SHARE LINKS
+  if (window.location.pathname.startsWith("/view/")) {
+    setUser(null);
+    setLoading(false);
+    return;
+  }
 
-        setUser({
-          id: data._id || data.id,
-          email: data.email,
-          storageLimit: data.storageLimit,
-          usedStorage: data.usedStorage,
-          plan: data.plan,
-        });
-      } catch {
-        if (!cancelled) setUser(null);
-      } finally {
-        if (!cancelled) setLoading(false); // 🔥 END LOADING
-      }
-    };
+  const checkAuth = async () => {
+    try {
+      const data = await getMe();
+      if (cancelled) return;
 
-    checkAuth();
+      setUser({
+        id: data._id || data.id,
+        email: data.email,
+        storageLimit: data.storageLimit,
+        usedStorage: data.usedStorage,
+        plan: data.plan,
+      });
+    } catch (err) {
+ if (err.status === 403 || err.data?.message === "Account suspended") {
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    // account suspended
+    setSuspended(true);
+    setUser(null);
+  } else {
+    // normal logout / token invalid
+    setSuspended(false);
+    setUser(null);
+  }
+} finally {
+  if (!cancelled) setLoading(false);
+}
+
+  };
+
+  checkAuth();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
 
   const signup = async (email, password) => {
     await apiSignup(email, password);
@@ -47,19 +67,38 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const data = await apiLogin(email, password);
+  try {
+    await apiLogin(email, password);
+
+    const data = await getMe(); // will throw 403 if suspended
+
+    setSuspended(false);
     setUser({
-      id: data.user._id || data.user.id,
-      email: data.user.email,
-      storageLimit: data.user.storageLimit,
-      usedStorage: data.user.usedStorage,
-      plan: data.user.plan,
+      id: data._id || data.id,
+      email: data.email,
+      storageLimit: data.storageLimit,
+      usedStorage: data.usedStorage,
+      plan: data.plan,
     });
-  };
+  } catch (err) {
+  if (err.status === 403 || err.data?.message === "Account suspended") {
+    // 🚫 suspended account
+    setSuspended(true);
+    setUser(null);
+    return; // do NOT throw
+  }
+
+  throw err; // real login error
+}
+
+};
+
+
 
   const logout = async () => {
     await apiLogout();
     setUser(null);
+    setSuspended(false);
   };
 
   // 🔒 GLOBAL AUTH GATE (THIS PREVENTS FLICKER)
@@ -92,9 +131,19 @@ export const AuthProvider = ({ children }) => {
   );
 }
 
+if (suspended) {
+  return (
+    <AuthContext.Provider value={{ user: null, loading: false, signup, login, logout, suspended }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+
 
   return (
-    <AuthContext.Provider value={{ user, loading, signup, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, signup, login, logout, suspended }}>
+
       {children}
     </AuthContext.Provider>
   );

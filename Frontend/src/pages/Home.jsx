@@ -35,7 +35,7 @@ export default function Home() {
 
   return (
     <>
-      <Navbar />
+      
       <main className="bg-gradient-to-b from-blue-50 via-white to-white">
         {/* EVERYTHING BELOW IS UNCHANGED */}
 
@@ -555,7 +555,7 @@ export default function Home() {
 
   </div>
 </section>
-        <Footer />
+        
       </main>
     
     </>

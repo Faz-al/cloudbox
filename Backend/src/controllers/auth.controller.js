@@ -37,7 +37,12 @@ const signup = async (req, res) => {
   storageLimit: 5 * 1024 * 1024 * 1024, // 5 GB
   usedStorage: 0,
   plan: "free",
+
+  // legal acceptance
+  termsAcceptedAt: new Date(),
+  termsVersion: "2026-01",
 });
+
 
 
     const token = jwt.sign(
@@ -80,32 +85,36 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // 🚫 BLOCK SUSPENDED USERS FIRST
+    if (user.isSuspended) {
+      return res.status(403).json({ message: "Account suspended" });
+    }
+
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign(
-  {
-    id: user._id,
-    email: user.email,
-    tokenVersion: user.tokenVersion || 0,
-  },
-  process.env.JWT_SECRET,
-  { expiresIn: "7d" }
-);
-
+      {
+        id: user._id,
+        email: user.email,
+        tokenVersion: user.tokenVersion || 0,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.cookie("token", token, cookieOptions);
 
     return res.json({
       message: "Login successful",
       user: {
-      email: user.email,
-      storageLimit: user.storageLimit,
-      usedStorage: user.usedStorage,
-    },
-
+        email: user.email,
+        storageLimit: user.storageLimit,
+        usedStorage: user.usedStorage,
+        plan: user.plan,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -250,6 +259,8 @@ const logout = (req, res) => {
 
 
 
+
+
      // logout all
 
 const logoutAll = async (req, res) => {
@@ -259,17 +270,13 @@ const logoutAll = async (req, res) => {
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
-    res.clearCookie("token", {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-    });
-
+    res.clearCookie("token", cookieOptions);
     res.json({ message: "Logged out from all devices" });
   } catch (err) {
     res.status(500).json({ message: "Logout failed" });
   }
 };
+
 
 
 

@@ -185,6 +185,21 @@ const passwordStrength = getPasswordStrength(password);
                   >
                     {loading ? "Creating account…" : "Create account"}
                   </button>
+
+                    <p className="text-[11px] text-center text-gray-500 mt-3 leading-relaxed">
+  By creating an account, you agree to CloudBox’s{" "}
+  <Link to="/terms" className="text-blue-600 hover:underline">
+    Terms of Service
+  </Link>{" "}
+  and{" "}
+  <Link to="/privacy" className="text-blue-600 hover:underline">
+    Privacy Policy
+  </Link>.
+</p>
+
+
+
+
                 </form>
 
                 {/* Footer */}

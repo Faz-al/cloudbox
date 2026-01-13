@@ -1,3 +1,7 @@
+import { Link } from "react-router-dom";
+
+
+
 export default function Footer() {
   return (
     <footer className="bg-gray-100 mt-20 border-t border-gray-200">
@@ -13,16 +17,23 @@ export default function Footer() {
           </div>
 
           <nav className="flex gap-6 text-sm text-gray-600">
-            <a href="#" className="hover:text-gray-900 transition">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-gray-900 transition">
-              Terms
-            </a>
-            <a href="#" className="hover:text-gray-900 transition">
-              Contact
-            </a>
-          </nav>
+  <Link to="/privacy" className="hover:text-gray-900 transition">
+    Privacy
+  </Link>
+
+  <Link to="/terms" className="hover:text-gray-900 transition">
+    Terms
+  </Link>
+
+  <Link to="/dmca" className="hover:text-gray-900 transition">
+    DMCA
+  </Link>
+
+  <Link to="/contact" className="hover:text-gray-900 transition">
+    Contact
+  </Link>
+</nav>
+
 
           <p className="text-xs text-gray-500">
             © 2026 CloudBox

@@ -1,5 +1,12 @@
 import { Routes, Route } from "react-router-dom";
 import { useState } from "react";
+import ViewSharedFile from "./pages/ViewSharedFile";
+import DMCA from "./pages/DMCA";
+
+
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Contact from "./pages/Contact";
 
 
 
@@ -39,79 +46,43 @@ export default function App() {
   return (
     <>
       <Routes>
-        {/* PUBLIC */}
-        <Route
-          path="/"
-          element={
-            <PublicRoute>
-              <Home />
-            </PublicRoute>
-          }
-        />
 
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
+  {/* ========== PUBLIC FILE VIEW (NO UI) ========== */}
+  <Route path="/view/:token" element={<ViewSharedFile />} />
 
-        <Route
-          path="/signup"
-          element={
-            <PublicRoute>
-              <Signup />
-            </PublicRoute>
-          }
-        />
+  {/* ========== PUBLIC WEBSITE (WITH NAVBAR) ========== */}
+  <Route element={<AppLayout />}>
+    <Route path="/" element={<Home />} />
+    <Route path="/privacy" element={<Privacy />} />
+    <Route path="/terms" element={<Terms />} />
+    <Route path="/dmca" element={<DMCA />} />
+    <Route path="/contact" element={<Contact />} />
+  </Route>
 
-        <Route
-          path="/forgot-password"
-          element={
-            <PublicRoute>
-              <ForgotPassword />
-            </PublicRoute>
-          }
-        />
+  {/* ========== AUTH PAGES (NO NAVBAR) ========== */}
+  <Route element={<PublicRoute />}>
+    <Route path="/login" element={<Login />} />
+    <Route path="/signup" element={<Signup />} />
+    <Route path="/forgot-password" element={<ForgotPassword />} />
+  </Route>
 
-        {/* PROTECTED */}
-       
-<Route
-  element={
-    <ProtectedRoute>
-      <AppLayout />
-    </ProtectedRoute>
-  }
->
-  <Route
-    path="/dashboard"
-    element={<Dashboard openPreview={openPreview} />}
-  />
+  {/* ========== APP (LOGGED IN) ========== */}
+  <Route element={<ProtectedRoute />}>
+    <Route element={<AppLayout />}>
+      <Route path="/dashboard" element={<Dashboard openPreview={openPreview} />} />
+      <Route path="/files" element={<Files openPreview={openPreview} />} />
+      <Route path="/vault" element={<Vault />} />
+      <Route path="/upgrade" element={<Upgrade />} />
+      <Route path="/account" element={<AccountSettings />} />
+      <Route path="/settings/security" element={<SettingsSecurity />} />
+    </Route>
+  </Route>
 
-  <Route
-    path="/files"
-    element={<Files openPreview={openPreview} />}
-  />
-
-  <Route path="/vault" element={<Vault />} />
-
-
-
-  <Route path="/upgrade" element={<Upgrade />} />
-
-  <Route path="/account" element={<AccountSettings />} />
-
-  <Route path="/settings/security" element={<SettingsSecurity />} />
+</Routes>
 
 
 
 
-</Route>
-
-
-      </Routes>
 
       {/* 🔥 ONE GLOBAL PREVIEW */}
       <ImagePreview

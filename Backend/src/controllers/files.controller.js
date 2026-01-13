@@ -9,6 +9,14 @@
  */
 
 
+const noCache = (res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+};
+
+
+
 const AuditLog = require("../models/AuditLog");
 
 const bcrypt = require("bcryptjs");
@@ -124,6 +132,218 @@ const permanentDeleteRecursive = async (fileId, userId) => {
   // remove DB record
   await File.deleteOne({ _id: file._id });
 };
+
+
+/* ================= PUBLIC SHARING (PHASE 1) ================= */
+
+const getShareStatus = async (req, res) => {
+  noCache(res);
+
+
+  const userId = req.user?.id || req.user?._id;
+  if (!userId) return res.status(401).end();
+
+  const file = await File.findOne({
+    _id: req.params.id,
+    user: userId,
+    isDeleted: false,
+  });
+
+  if (!file) return res.status(404).json({ message: "File not found" });
+
+  res.json({
+    isShared: file.isShared,
+    shareEnabled: file.shareEnabled !== false,
+    token: file.shareToken || null,
+    url: file.shareToken
+      ? `${process.env.FRONTEND_URL}/view/${file.shareToken}`
+      : null,
+  });
+};
+
+
+const toggleShare = async (req, res) => {
+  noCache(res);
+
+  const userId = req.user?.id || req.user?._id;
+  if (!userId) return res.status(401).end();
+
+  const file = await File.findOne({
+    _id: req.params.id,
+    user: userId,
+    isDeleted: false,
+  });
+
+  if (!file || !file.isShared || !file.shareToken) {
+    return res.status(400).json({ message: "File not shared" });
+  }
+
+  file.shareEnabled = !file.shareEnabled;
+  await file.save();
+
+  res.json({
+    shareEnabled: file.shareEnabled,
+  });
+};
+
+
+
+
+
+
+
+
+
+
+/* Generate share link */
+
+console.log("FRONTEND_URL =", process.env.FRONTEND_URL);
+
+
+const shareFile = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) return res.status(401).end();
+
+    const file = await File.findOne({
+      _id: req.params.id,
+      user: userId,
+      isDeleted: false,
+    });
+
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    if (!file.shareToken) {
+      file.shareToken = crypto.randomBytes(24).toString("hex");
+      file.isShared = true;
+      await file.save();
+    }
+
+    res.json({
+      token: file.shareToken,
+      url: `${process.env.FRONTEND_URL}/view/${file.shareToken}`,
+    });
+  } catch (err) {
+    console.error("SHARE ERROR:", err);
+    res.status(500).json({ message: "Share failed" });
+  }
+};
+
+const getSharedFile = async (req, res) => {
+  noCache(res);
+
+  try {
+    const file = await File.findOne({
+      shareToken: req.params.token,
+      isShared: true,
+      isDeleted: false,
+    });
+
+
+    if (!file) return res.status(404).end();
+
+    if (file.shareEnabled === false) {
+      return res.status(410).end();
+    }
+
+    const data = await s3.send(
+      new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET,
+        Key: file.key,
+      })
+    );
+
+    res.setHeader("Content-Type", file.type);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${file.name}"`
+    );
+
+    data.Body.pipe(res);
+  } catch (err) {
+    console.error("PUBLIC SHARE ERROR:", err);
+    res.status(404).end();
+  }
+};
+
+
+
+
+
+
+
+
+// ===== PUBLIC FILE INFO =====
+const getSharedFileInfo = async (req, res) => {
+  noCache(res);
+
+  try {
+    const file = await File.findOne({
+      shareToken: req.params.token,
+      isShared: true,
+      isDeleted: false,
+    });
+
+
+    if (!file) return res.status(404).end();
+
+    if (file.shareEnabled === false) {
+      return res.status(410).json({ disabled: true });
+    }
+
+    res.json({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch file info" });
+  }
+};
+
+
+
+
+
+// ===== PUBLIC PREVIEW (INLINE STREAM) =====
+const previewSharedFile = async (req, res) => {
+  noCache(res);
+
+  try {
+    const file = await File.findOne({
+      shareToken: req.params.token,
+      isShared: true,
+      isDeleted: false,
+    });
+
+
+    if (!file) return res.status(404).end();
+
+    if (file.shareEnabled === false) {
+      return res.status(410).end();
+    }
+
+    const data = await s3.send(
+      new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET,
+        Key: file.key,
+      })
+    );
+
+    res.setHeader("Content-Type", file.type);
+    res.setHeader("Content-Disposition", "inline");
+
+    data.Body.pipe(res);
+  } catch (err) {
+    console.error("PREVIEW ERROR", err);
+    res.status(404).end();
+  }
+};
+
+
+
 
 
 
@@ -720,6 +940,16 @@ module.exports = {
   unvaultFile,
   listVault,
   getVaultStatus,
+  shareFile,
+  getSharedFile,
+  getSharedFileInfo,
+  previewSharedFile,
+  getShareStatus,
+  toggleShare,
+
+
+
+
 };
 
 

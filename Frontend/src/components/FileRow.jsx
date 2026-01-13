@@ -127,25 +127,29 @@ const toggleShare = async () => {
 
 
 
-      {onSelect && (
-  <div>
-  <input
-    type="checkbox"
-    checked={selected}
+     {onSelect && (
+  <div
     onClick={(e) => {
       e.stopPropagation();
       onSelect();
     }}
-    readOnly
-    className={`w-4 h-4 rounded border-gray-300 transition ${
-      selected
-        ? "opacity-100"
-        : "opacity-0 group-hover:opacity-100"
-    }`}
-  />
-</div>
-
+    className="flex items-center justify-center
+               w-5 h-11 rounded-lg
+               hover:bg-gray-100 active:bg-gray-200 transition"
+  >
+    <input
+      type="checkbox"
+      checked={selected}
+      readOnly
+      className={`w-4 h-5 accent-blue-600 ${
+        selected
+          ? "opacity-100"
+          : "opacity-0 group-hover:opacity-100"
+      }`}
+    />
+  </div>
 )}
+
 
 
 

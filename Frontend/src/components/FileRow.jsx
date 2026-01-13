@@ -23,6 +23,7 @@ export default function FileRow({
 const [copyDone, setCopyDone] = useState(false);
 const [shareStatus, setShareStatus] = useState(null);
 const [toggling, setToggling] = useState(false);
+const [menuOpen, setMenuOpen] = useState(false);
 
 
 const handleShare = async () => {
@@ -105,16 +106,29 @@ const toggleShare = async () => {
   };
 
   return (
-    <div className="group flex items-center justify-between px-6 py-3 text-sm hover:bg-gray-50 transition-colors">
+    <div className="group flex items-center justify-between px-3 sm:px-6 py-4 sm:py-2 gap-4 text-[13px] hover:bg-gray-50 transition-colors">
+
+
+
+
       {/* LEFT */}
       <div
-        className="flex items-center gap-3 min-w-0 cursor-pointer"
-        onClick={() =>
-          file.isFolder ? onOpenFolder?.(file._id) : onPreview?.(file)
-        }
-      >
+  className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+  onClick={() => {
+    // If any selection exists, this click means "select", not "open"
+    if (window.__cloudboxSelectionActive) {
+      onSelect?.();
+      return;
+    }
+
+    file.isFolder ? onOpenFolder?.(file._id) : onPreview?.(file);
+  }}
+>
+
+
 
       {onSelect && (
+  <div>
   <input
     type="checkbox"
     checked={selected}
@@ -123,12 +137,14 @@ const toggleShare = async () => {
       onSelect();
     }}
     readOnly
-    className={`transition ${
+    className={`w-4 h-4 rounded border-gray-300 transition ${
       selected
         ? "opacity-100"
         : "opacity-0 group-hover:opacity-100"
     }`}
   />
+</div>
+
 )}
 
 
@@ -136,52 +152,126 @@ const toggleShare = async () => {
 
 
 
-        <span className="font-medium text-gray-900 truncate">
-          {file.name}
-        </span>
 
-        {!file.isFolder && (
-          <span className="text-xs text-gray-400 shrink-0">
-            {(file.size / (1024 * 1024)).toFixed(2)} MB
-          </span>
-        )}
+       <div className="flex flex-col min-w-0">
+  <span className="text-[13.5px] text-gray-900 truncate">
+
+
+    {file.name}
+  </span>
+
+  {!file.isFolder && (
+    <span className="text-xs text-gray-400">
+      {(file.size / (1024 * 1024)).toFixed(2)} MB
+    </span>
+  )}
+</div>
+
       </div>
 
       {/* ACTIONS */}
-      <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        {!file.isFolder && (
-          <>
-            <Action onClick={() => onPreview?.(file)}>Preview</Action>
-            <Action onClick={handleDownload}>Download</Action>
-            <Action onClick={handleShare}>Share</Action>
 
-          </>
-        )}
+     {/* Mobile ⋯ menu */}
+<div className="sm:hidden shrink-0">
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      setMenuOpen(true);
+    }}
+    className="p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100"
 
-        {onRename && <Action onClick={() => onRename(file)}>Rename</Action>}
+  >
+    <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24">
+      <circle cx="12" cy="5" r="2"/>
+      <circle cx="12" cy="12" r="2"/>
+      <circle cx="12" cy="19" r="2"/>
+    </svg>
+  </button>
+</div>
 
-        {onVault && <Action onClick={() => onVault(file._id)}>Vault</Action>}
+{/* Desktop actions */}
+<div className="hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
 
-        {onUnvault && (
-          <Action danger onClick={() => onUnvault(file._id)}>
-            Remove
-          </Action>
-        )}
+  {!file.isFolder && (
+    <>
+      <Action onClick={() => onPreview?.(file)}>View</Action>
+      <Action onClick={handleDownload}>Download</Action>
+      <Action onClick={handleShare}>Share</Action>
+    </>
+  )}
 
-        {onRestore && (
-          <Action onClick={() => onRestore(file._id)}>Restore</Action>
-        )}
+  {onVault && <Action onClick={() => onVault(file._id)}>Vault</Action>}
+  {onRestore && <Action onClick={() => onRestore(file._id)}>Restore</Action>}
+  {onDelete && (
+    <Action danger onClick={() => onDelete(file._id)}>
+      {onRestore ? "Delete forever" : "Delete"}
+    </Action>
+  )}
+</div>
 
-        {onDelete && (
-          <Action danger onClick={() => onDelete(file._id)}>
-            {onRestore ? "Delete forever" : "Delete"}
-          </Action>
-        )}
 
-            
-            
+      {menuOpen && (
+  <div
+    className="fixed inset-0 sm:hidden z-50 bg-black/40 flex items-end"
+    onClick={() => setMenuOpen(false)}
+  >
+    <div
+      className="bg-white w-full rounded-t-2xl p-4"
+      onClick={(e) => e.stopPropagation()}
+    >
 
+      <div className="text-sm font-semibold mb-3 truncate">
+        {file.name}
       </div>
+
+      {!file.isFolder && (
+        <>
+          <ActionSheet onClick={() => { onPreview(file); setMenuOpen(false); }}>
+            View
+          </ActionSheet>
+
+          <ActionSheet onClick={() => { handleDownload(); setMenuOpen(false); }}>
+            Download
+          </ActionSheet>
+
+          <ActionSheet onClick={() => { handleShare(); setMenuOpen(false); }}>
+            Share link
+          </ActionSheet>
+        </>
+      )}
+
+      {onVault && (
+        <ActionSheet onClick={() => { onVault(file._id); setMenuOpen(false); }}>
+          Move to Vault
+        </ActionSheet>
+      )}
+
+      {onRestore && (
+        <ActionSheet onClick={() => { onRestore(file._id); setMenuOpen(false); }}>
+          Restore
+        </ActionSheet>
+      )}
+
+      {onDelete && (
+        <ActionSheet danger onClick={() => { onDelete(file._id); setMenuOpen(false); }}>
+          {onRestore ? "Delete forever" : "Delete"}
+        </ActionSheet>
+      )}
+
+      <button
+        onClick={() => setMenuOpen(false)}
+        className="w-full py-3 mt-3 text-sm text-gray-500"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
+
+
+
+
+
 
 
           {shareLink && (
@@ -276,13 +366,30 @@ function Action({ children, onClick, danger }) {
         e.stopPropagation();
         onClick();
       }}
-      className={`text-xs ${
+      className={`px-3 py-1.5 rounded-md text-xs font-medium ${
         danger
-          ? "text-red-600 hover:text-red-800"
-          : "text-gray-600 hover:text-gray-900"
+          ? "text-red-600 hover:bg-red-50"
+          : "text-gray-600 hover:bg-gray-100"
       }`}
     >
       {children}
     </button>
   );
 }
+
+function ActionSheet({ children, onClick, danger }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left py-3 px-2 text-sm rounded-lg ${
+        danger
+          ? "text-red-600 hover:bg-red-50"
+          : "text-gray-800 hover:bg-gray-100"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+

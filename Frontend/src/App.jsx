@@ -16,6 +16,7 @@ import AppLayout from "./layouts/AppLayout";
 import SettingsSecurity from "./pages/SettingsSecurity";
 import Vault from "./pages/Vault";
 
+import PublicLayout from "./layouts/PublicLayout";
 
 
 import Home from "./pages/Home";
@@ -45,36 +46,28 @@ export default function App() {
 
   return (
     <>
-      <Routes>
+     <Routes>
 
-  {/* ========== PUBLIC FILE VIEW (NO UI) ========== */}
+  {/* Public file viewer */}
   <Route path="/view/:token" element={<ViewSharedFile />} />
 
-  {/* ========== PUBLIC WEBSITE (WITH NAVBAR) ========== */}
+  {/* Everything else uses AppLayout */}
   <Route element={<AppLayout />}>
 
-    {/* Home (redirects if logged in) */}
+    {/* Public pages */}
     <Route element={<PublicRoute />}>
       <Route path="/" element={<Home />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/dmca" element={<DMCA />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
     </Route>
 
-    <Route path="/privacy" element={<Privacy />} />
-    <Route path="/terms" element={<Terms />} />
-    <Route path="/dmca" element={<DMCA />} />
-    <Route path="/contact" element={<Contact />} />
-
-  </Route>
-
-  {/* ========== AUTH PAGES (NO NAVBAR) ========== */}
-  <Route element={<PublicRoute />}>
-    <Route path="/login" element={<Login />} />
-    <Route path="/signup" element={<Signup />} />
-    <Route path="/forgot-password" element={<ForgotPassword />} />
-  </Route>
-
-  {/* ========== APP (LOGGED IN) ========== */}
-  <Route element={<ProtectedRoute />}>
-    <Route element={<AppLayout />}>
+    {/* App pages */}
+    <Route element={<ProtectedRoute />}>
       <Route path="/dashboard" element={<Dashboard openPreview={openPreview} />} />
       <Route path="/files" element={<Files openPreview={openPreview} />} />
       <Route path="/vault" element={<Vault />} />
@@ -82,9 +75,12 @@ export default function App() {
       <Route path="/account" element={<AccountSettings />} />
       <Route path="/settings/security" element={<SettingsSecurity />} />
     </Route>
+
   </Route>
 
 </Routes>
+
+
 
 
 

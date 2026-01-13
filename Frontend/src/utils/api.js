@@ -20,11 +20,27 @@ const apiFetch = async (url, options = {}) => {
   
 
  if (!res.ok) {
-  const err = new Error(data.message || "Request failed");
+  const message = data?.message || "Request failed";
+
+  // 🔒 Vault locked → show toast, don't crash app
+  if (message === "Vault locked") {
+    window.dispatchEvent(
+      new CustomEvent("toast", {
+        detail: {
+          type: "error",
+          message: "Vault is locked",
+        },
+      })
+    );
+    return null; // IMPORTANT: do not throw
+  }
+
+  const err = new Error(message);
   err.status = res.status;
   err.data = data;
   throw err;
 }
+
 
 
   return data;

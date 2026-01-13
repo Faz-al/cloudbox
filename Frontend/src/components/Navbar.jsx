@@ -2,195 +2,158 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FEATURES } from "../config/features";
-
-
 import { subscribeUploads, getActiveCount } from "../utils/uploadManager";
 
-
-export default function Navbar() {
-  const [open, setOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+export default function Navbar({ onMenu }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [activeUploads, setActiveUploads] = useState(0);
 
   const handleLogout = async () => {
     await logout();
     setProfileOpen(false);
-    setOpen(false);
     navigate("/");
   };
 
-  const [activeUploads, setActiveUploads] = useState(0);
-
-useEffect(() => {
-  return subscribeUploads(() => {
-    setActiveUploads(getActiveCount());
-  });
-}, []);
-
+  useEffect(() => {
+    return subscribeUploads(() => {
+      setActiveUploads(getActiveCount());
+    });
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <Link
-          to={user ? "/dashboard" : "/"}
-          className="font-semibold text-lg text-blue-600 tracking-tight"
-          onClick={() => {
-            setOpen(false);
-            setProfileOpen(false);
-          }}
-        >
-          CloudBox
-        </Link>
+    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200">
+      <div className="h-14 px-4 sm:px-6 flex items-center justify-between">
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6 text-sm">
+        {/* LEFT */}
+        <div className="flex items-center gap-3">
+          {user && (
+            <button
+              onClick={onMenu}
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition"
+            >
+              <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
+
+          <Link
+            to={user ? "/dashboard" : "/"}
+            className="text-base font-semibold tracking-tight text-gray-900"
+          >
+            CloudBox Pro
+          </Link>
+
+          {activeUploads > 0 && (
+            <span className="ml-2 flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              Uploading
+            </span>
+          )}
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex items-center gap-3">
           {!user ? (
             <>
-              <Link to="/login" className="text-gray-700 hover:text-blue-600">
+              <Link
+                to="/login"
+                className="text-sm text-gray-600 hover:text-gray-900 transition"
+              >
                 Login
               </Link>
+
               <Link
                 to="/signup"
-                className="bg-blue-600 text-white px-4 py-2 rounded-xl font-medium"
+                className="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-1.5 rounded-lg text-sm font-medium shadow-sm"
               >
-                Sign Up
+                Sign up
               </Link>
             </>
-
           ) : (
             <>
-              <Link to="/files" className="text-gray-700 hover:text-blue-600">
-                Files
-              </Link>
-              <Link to="/upgrade" className="text-gray-700 hover:text-blue-600">
+              <Link
+                to="/upgrade"
+                className="hidden sm:inline text-sm text-gray-600 hover:text-gray-900 transition"
+              >
                 Upgrade
               </Link>
 
-              {activeUploads > 0 && (
-  <div className="relative">
-    <div className="w-2.5 h-2.5 bg-blue-600 rounded-full absolute -top-1 -right-1" />
-  </div>
-)}
-
-
-              {/* Profile */}
+              {/* PROFILE */}
               <div className="relative">
                 <button
-  onClick={() => setProfileOpen(!profileOpen)}
-  className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold hover:opacity-90"
-  title="Account"
->
-  {user?.email?.[0]?.toUpperCase() || "•"}
-</button>
-
-
-
-
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center text-sm font-semibold shadow-sm hover:shadow transition"
+                >
+                  {user?.email?.[0]?.toUpperCase() || "•"}
+                </button>
 
                 {profileOpen && (
-  <div className="absolute right-0 mt-3 w-56 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-    
-    {/* Email */}
-    <div className="px-4 py-3 border-b">
-      <p className="text-sm font-medium text-gray-900">
-        {user?.email}
-      </p>
-    </div>
+                  <div
+                    onClick={() => setProfileOpen(false)}
+                    className="fixed inset-0 z-40"
+                  />
+                )}
 
-    {/* Future links */}
-    <button
-        onClick={() => {
-          setProfileOpen(false);
-         navigate("/account");
-       }}
-         className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-    >
-          Account settings
-      </button>
+                {profileOpen && (
+                  <div className="absolute right-0 mt-3 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-[fadeIn_0.12s_ease-out]">
 
+                    <div className="px-4 py-3 border-b bg-gray-50">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {user?.email}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Secure CloudBox account
+                      </p>
+                    </div>
 
-    {FEATURES.SECURITY_PAGE ? (
-  <button
-    onClick={() => {
-      setProfileOpen(false);
-      navigate("/settings/security");
-    }}
-    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-  >
-    Security
-  </button>
-) : (
-  <button
-    disabled
-    className="w-full text-left px-4 py-2.5 text-sm text-gray-400 cursor-not-allowed"
-  >
-    Security
-  </button>
-)}
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
+                        navigate("/account");
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition"
+                    >
+                      Account
+                    </button>
 
+                    {FEATURES.SECURITY_PAGE ? (
+                      <button
+                        onClick={() => {
+                          setProfileOpen(false);
+                          navigate("/settings/security");
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition"
+                      >
+                        Security
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-400"
+                      >
+                        Security
+                      </button>
+                    )}
 
-    {/* Logout */}
-    <button
-      onClick={handleLogout}
-      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50"
-    >
-      Logout
-    </button>
-  </div>
-)}
+                    <div className="border-t">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+                      >
+                        Log out
+                      </button>
+                    </div>
 
+                  </div>
+                )}
               </div>
             </>
           )}
-        </nav>
-
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-gray-700 text-xl"
-          onClick={() => setOpen(!open)}
-        >
-          ☰
-        </button>
-      </div>
-
-      {/* Mobile menu */}
-      {open && (
-        <div className="md:hidden bg-white border-t border-gray-100">
-          <div className="px-4 py-4 flex flex-col gap-3 text-sm">
-            {!user ? (
-              <>
-                <Link to="/login" onClick={() => setOpen(false)}>
-                  Login
-                </Link>
-                <Link
-                  to="/signup"
-                  onClick={() => setOpen(false)}
-                  className="bg-blue-600 text-white py-2.5 rounded-xl text-center"
-                >
-                  Sign Up
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/files" onClick={() => setOpen(false)}>
-                  Files
-                </Link>
-                <Link to="/upgrade" onClick={() => setOpen(false)}>
-                  Upgrade
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-left text-red-500"
-                >
-                  Logout
-                </button>
-              </>
-            )}
-          </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }

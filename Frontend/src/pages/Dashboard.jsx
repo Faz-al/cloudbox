@@ -110,180 +110,137 @@ export default function Dashboard() {
   };
 
   return (
-    <>
+  <div className="px-4 py-6 sm:px-6 lg:px-10 max-w-full">
 
-
-
-
-
-      {/* ===== Workspace Header ===== */}
-{/* ===== Page Header ===== */}
-{/* ===== Page Header ===== */}
-<div className="max-w-7xl mx-auto px-8">
-  <div className="flex items-center justify-between border-b border-gray-200/60 pb-5">
-    <div>
-      <h1 className="text-lg font-medium text-gray-900">
-        Dashboard
-      </h1>
-      <p className="text-sm text-gray-400 mt-0.5">
-        Your private CloudBox vault
+    {/* Vault Header */}
+    <div className="mb-6">
+      <h1 className="text-xl font-semibold text-gray-900">Your Vault</h1>
+      <p className="text-sm text-gray-500 mt-1">
+        Secure cloud storage
       </p>
     </div>
-  </div>
-</div>
 
+    {/* Storage Card */}
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-900">Storage</p>
+          <p className="text-xs text-gray-500 mt-1">
+            {usedGB.toFixed(2)} GB of {totalGB.toFixed(0)} GB used
+          </p>
+        </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      <main className="max-w-7xl mx-auto px-8 py-8 space-y-12">
-
-
-        {/* ===== HERO ===== */}
-        
-
-        {/* ===== PRIMARY PANEL ===== */}
-        <motion.section
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05, duration: 0.45 }}
-          className="rounded-3xl bg-white border border-gray-200/70 p-8"
+        <button
+          onClick={() => fileInputRef.current.click()}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
         >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-sm font-medium text-gray-900">
-                Storage usage
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {usedGB.toFixed(2)} GB of {totalGB.toFixed(0)} GB used
-              </p>
-            </div>
+          Upload
+        </button>
+      </div>
 
-            <button
-              onClick={() => fileInputRef.current.click()}
-              className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
-            >
-              Upload
-            </button>
+      <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percent}%` }}
+          transition={{ duration: 0.6 }}
+          className="h-full bg-blue-600"
+        />
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <QuickLink to="/files" label="All files" />
+        <QuickLink to="/files?type=image" label="Images" />
+        <QuickLink to="/files?type=video" label="Videos" />
+        <QuickLink to="/files?type=document" label="Documents" />
+      </div>
+    </motion.div>
+
+    {/* Recent Files */}
+    <div className="mt-10">
+      <h2 className="text-sm font-medium text-gray-900 mb-3">
+        Recent files
+      </h2>
+
+      <div className="bg-white border border-gray-200 rounded-xl divide-y overflow-hidden">
+        {recentFiles.length === 0 && (
+          <div className="p-4 text-sm text-gray-500">
+            No files yet
           </div>
-
-          <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${percent}%` }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-              className="h-full bg-blue-600"
-            />
-          </div>
-
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <QuickLink to="/files" label="All files" />
-            <QuickLink to="/files?type=image" label="Images" />
-            <QuickLink to="/files?type=video" label="Videos" />
-            <QuickLink to="/files?type=document" label="Documents" />
-          </div>
-        </motion.section>
-
-        {/* ===== RECENT FILES ===== */}
-        <section className="space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">
-            Recent files
-          </h2>
-
-          <div className="divide-y rounded-2xl border border-gray-200/70 bg-white">
-            {recentFiles.length === 0 && (
-              <div className="p-6 text-sm text-gray-500">
-                No files uploaded yet
-              </div>
-            )}
-
-            {recentFiles.map((file) => (
-              <div
-  key={file._id}
-  className="px-6 py-4 flex items-center justify-between text-sm cursor-pointer
-             transition-colors duration-150 hover:bg-gray-50"
-  onClick={() => {
-    if (
-      file.type?.startsWith("image") ||
-      file.type?.startsWith("video")
-    ) {
-      setPreviewFile(file);
-    }
-  }}
->
-  <span className="truncate text-gray-900">
-    {file.name}
-  </span>
-  <span className="text-gray-500">
-    {(file.size / (1024 * 1024)).toFixed(2)} MB
-  </span>
-</div>
-
-            ))}
-          </div>
-        </section>
-      </main>
-
-      {/* Hidden input */}
-      <input
-  ref={fileInputRef}
-  type="file"
-  multiple
-  className="hidden"
-  onChange={(e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(file => handleUpload(file));
-    e.target.value = null;
-  }}
-/>
-
-
-      {/* Upload HUD */}
-      <AnimatePresence>
-        {uploading && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 rounded-full bg-white border shadow-xl px-6 py-3 text-sm text-gray-700"
-          >
-            Uploading… {uploadProgress}%
-          </motion.div>
         )}
-      </AnimatePresence>
 
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            className="fixed bottom-6 right-6 rounded-xl bg-blue-600 text-white px-4 py-2 text-sm shadow-lg"
+        {recentFiles.map(file => (
+          <div
+            key={file._id}
+            onClick={() => {
+              if (file.type?.startsWith("image") || file.type?.startsWith("video")) {
+                setPreviewFile(file);
+              }
+            }}
+            className="flex items-center justify-between px-4 py-3 text-sm hover:bg-gray-50 cursor-pointer"
           >
-            {toast}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <span className="truncate text-gray-900">{file.name}</span>
+            <span className="text-gray-500">
+              {(file.size / (1024 * 1024)).toFixed(1)} MB
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
 
-      <ImagePreview
-        files={previewFiles}
-        activeFile={previewFile}
-        onClose={() => setPreviewFile(null)}
-      />
-    </>
-  );
+    {/* Hidden upload input */}
+    <input
+      ref={fileInputRef}
+      type="file"
+      multiple
+      className="hidden"
+      onChange={(e) => {
+        const files = Array.from(e.target.files);
+        files.forEach(file => handleUpload(file));
+        e.target.value = null;
+      }}
+    />
+
+    {/* Upload HUD */}
+    <AnimatePresence>
+      {uploading && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white border shadow-lg rounded-full px-5 py-2 text-sm"
+        >
+          Uploading… {uploadProgress}%
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* Toast */}
+    <AnimatePresence>
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          className="fixed bottom-6 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg"
+        >
+          {toast}
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    <ImagePreview
+      files={previewFiles}
+      activeFile={previewFile}
+      onClose={() => setPreviewFile(null)}
+    />
+  </div>
+);
+
 }
 
 /* ===== Small UI pieces ===== */

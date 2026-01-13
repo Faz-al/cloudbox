@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 export default function Sidebar({
   onAllFiles,
@@ -6,6 +6,21 @@ export default function Sidebar({
   onVault,
   forceOpen = false,
 }) {
+
+
+  const { pathname, search } = useLocation();
+
+const isAll = pathname === "/files" && !search;
+const isVault = pathname === "/vault";
+const isTrash = pathname === "/files" && search === "?type=trash";
+const isImage = pathname === "/files" && search === "?type=image";
+const isVideo = pathname === "/files" && search === "?type=video";
+const isDocument = pathname === "/files" && search === "?type=document";
+
+
+
+
+
   const baseItem =
     "group flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors";
 
@@ -30,42 +45,45 @@ export default function Sidebar({
 
       {/* Primary */}
       <nav className="px-3 space-y-1">
-        <SidebarButton onClick={onAllFiles} label="All files" icon={FolderIcon} />
-        <SidebarButton onClick={onVault} label="Vault" icon={LockIcon} />
-        <SidebarButton onClick={onTrash} label="Trash" icon={TrashIcon} />
-      </nav>
+  <NavLink to="/files" className={`${baseItem} ${isAll ? active : inactive}`}>
+
+    <FolderIcon />
+    <span>All files</span>
+  </NavLink>
+
+ <NavLink to="/vault" className={`${baseItem} ${isVault ? active : inactive}`}>
+
+    <LockIcon />
+    <span>Vault</span>
+  </NavLink>
+
+  <NavLink to="/files?type=trash" className={`${baseItem} ${isTrash ? active : inactive}`}>
+
+    <TrashIcon />
+    <span>Trash</span>
+  </NavLink>
+</nav>
+
 
       {/* Divider */}
       <div className="my-4 border-t mx-6" />
 
       {/* Filters */}
       <nav className="px-3 space-y-1">
-        <NavLink
-          to="/files?type=image"
-          className={({ isActive }) =>
-            `${baseItem} ${isActive ? active : inactive}`
-          }
-        >
+       <NavLink to="/files?type=image" className={`${baseItem} ${isImage ? active : inactive}`}>
+
           <ImageIcon />
           <span>Images</span>
         </NavLink>
 
-        <NavLink
-          to="/files?type=video"
-          className={({ isActive }) =>
-            `${baseItem} ${isActive ? active : inactive}`
-          }
-        >
+        <NavLink to="/files?type=video" className={`${baseItem} ${isVideo ? active : inactive}`}>
+
           <VideoIcon />
           <span>Videos</span>
         </NavLink>
 
-        <NavLink
-          to="/files?type=document"
-          className={({ isActive }) =>
-            `${baseItem} ${isActive ? active : inactive}`
-          }
-        >
+        <NavLink to="/files?type=document" className={`${baseItem} ${isDocument ? active : inactive}`}>
+
           <DocumentIcon />
           <span>Documents</span>
         </NavLink>

@@ -328,6 +328,8 @@ const deleteForever = async (id) => {
 
 
 const selectedIds = Array.from(selected);
+window.__cloudboxSelectionActive = selectedIds.length > 0;
+
 
 const clearSelection = () => setSelected(new Set());
 
@@ -446,99 +448,47 @@ const bulkDeleteForever = () => {
     <>
       
 
-      <div className="flex min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="h-full bg-gray-50">
 
-       <Sidebar
-  onAllFiles={() => {
-    setMode("files");
-    goToRoot();
-  }}
-  onTrash={() => {
-    setMode("trash");
-    setHistory([null]);
-    setHistoryIndex(0);
-    navigate("/files");
-  }}
-  onVault={() => navigate("/vault")}
-/>
+
+      
 
         {/* Mobile sidebar */}
-{mobileSidebarOpen && (
-  <div className="fixed inset-0 z-50 md:hidden">
-    {/* backdrop */}
-    <div
-      className="absolute inset-0 bg-black/30"
-      onClick={() => setMobileSidebarOpen(false)}
-    />
 
-    {/* drawer */}
-    <div className="absolute left-0 top-0 h-full w-64 bg-white shadow-xl">
-      <Sidebar
-  forceOpen
-  onAllFiles={() => {
-    setMode("files");
-    goToRoot();
-    setMobileSidebarOpen(false);
-  }}
-  onTrash={() => {
-    setMode("trash");
-    setHistory([null]);
-    setHistoryIndex(0);
-    navigate("/files");
-    setMobileSidebarOpen(false);
-  }}
-  onVault={() => {
-    navigate("/vault");
-    setMobileSidebarOpen(false);
-  }}
-/>
-
-    </div>
-  </div>
-)}
         
 
 
-        <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 overflow-x-hidden">
+        <main className="h-full px-4 sm:px-6 lg:px-8 py-6">
+
+
+          <div className="mb-5">
+  <h1 className="text-xl font-semibold text-gray-900">
+    {mode === "trash" ? "Trash" : "Files"}
+  </h1>
+  <p className="text-sm text-gray-500 mt-1">
+    {mode === "trash"
+      ? "Deleted files"
+      : "Your cloud storage"}
+  </p>
+</div>
+
+
+
+
+
 
           {/* Mobile header */}
-<div className="flex items-center gap-3 mb-4 md:hidden">
-  <button
-    onClick={() => setMobileSidebarOpen(true)}
-    className="
-      p-2
-      rounded-lg
-      border
-      border-gray-200
-      bg-white
-      hover:bg-blue-50
-      hover:border-blue-200
-      transition
-    "
-    aria-label="Open menu"
-  >
-    <svg
-      className="w-5 h-5 text-gray-700"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  </button>
 
-  <span className="text-sm font-medium text-gray-700">
-    Files
-  </span>
-</div>
 
 
           <Breadcrumb path={breadcrumb} onNavigate={navigateToFolder} />
 
           
 
-          <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+          {selected.size === 0 && (
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+
+
             <div className="flex items-center gap-2">
               <button
                 onClick={goBack}
@@ -561,6 +511,11 @@ const bulkDeleteForever = () => {
               >
                 ↑
               </button>
+              
+              
+              
+
+
             </div>
 
             
@@ -646,18 +601,27 @@ const bulkDeleteForever = () => {
     Grid
   </button>
 </div>
+ </div>
+)}
 
 
 
 
-          {selected.size > 0 && (
-<div className="mb-4 p-3 bg-white/80 backdrop-blur border border-gray-200 rounded-xl shadow-sm flex flex-wrap items-center justify-between gap-3">
-    <div className="text-sm font-medium text-gray-700">
 
-      {selected.size} selected
-    </div>
 
-    <div className="flex flex-wrap gap-2">
+         {selected.size > 0 && (
+  <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+    <div className="text-sm font-semibold text-blue-900">
+  {selected.size} selected
+</div>
+
+            
+
+
+    <div className="flex flex-wrap sm:flex-nowrap gap-2">
+
+
       <button
         onClick={selectAll}
         className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50"
@@ -724,13 +688,14 @@ const bulkDeleteForever = () => {
 
 
 
+
     
 
 
 
 
 
-          </div>
+          
 
           <div
             className={`transition-all duration-300 ${
@@ -756,15 +721,34 @@ const bulkDeleteForever = () => {
               }}
             onDelete={mode === "trash" ? deleteForever : handleDelete}
             onRestore={mode === "trash" ? restoreFile : null}
+           
+           
             onVault={
-    mode === "files" && !file.isFolder
-      ? async (id) => {
+  mode === "files" && !file.isFolder
+    ? async (id) => {
+        try {
           await vaultFile(id);
-
           setFiles((prev) => prev.filter((f) => f._id !== id));
+        } catch (err) {
+          if (err?.message === "Vault locked") {
+            setConfirm({
+              title: "Vault is locked",
+              message:
+                "Your vault is currently locked. Unlock it before moving files into it.",
+              action: () => {
+                navigate("/vault");
+                setConfirm(null);
+              },
+              confirmLabel: "Go to Vault",
+            });
+          } else {
+            alert("Failed to move file to vault");
+          }
         }
-      : null
-  }
+      }
+    : null
+}
+
             onOpenFolder={(id) => navigateToFolder(id)}
           />
 
@@ -843,11 +827,16 @@ const bulkDeleteForever = () => {
         </button>
 
         <button
-          onClick={confirm.action}
-          className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Confirm
-        </button>
+  onClick={confirm.action}
+  className={`px-4 py-2 text-sm rounded ${
+    confirm.confirmLabel
+      ? "bg-blue-600 hover:bg-blue-700 text-white"
+      : "bg-red-600 hover:bg-red-700 text-white"
+  }`}
+>
+  {confirm.confirmLabel || "Confirm"}
+</button>
+
       </div>
     </div>
   </div>

@@ -1,10 +1,10 @@
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 import { Outlet } from "react-router-dom";
-import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useLocation } from "react-router-dom";
 
 
 export default function AppLayout() {
@@ -12,6 +12,14 @@ const { user } = useAuth();
 const [mobileNav, setMobileNav] = useState(false);
 
 const location = useLocation();
+
+useEffect(() => {
+  setMobileNav(false);
+}, [location.pathname, location.search]);
+
+
+
+
 const isAuthPage =
   location.pathname === "/login" ||
   location.pathname === "/signup" ||

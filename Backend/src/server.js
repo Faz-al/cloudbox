@@ -41,25 +41,16 @@ app.set("etag", false);
 
 
 /* ===== CORS (COOKIE SAFE) ===== */
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "https://cloudbox-frontend-n6gf.onrender.com",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
+const allowedOrigin =
+  process.env.FRONTEND_URL || "http://localhost:3000";
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: allowedOrigin,
     credentials: true,
   })
 );
+
 
 /* ===== MIDDLEWARE ===== */
 app.use(express.json());

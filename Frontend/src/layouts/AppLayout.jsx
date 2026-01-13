@@ -46,21 +46,21 @@ const isAuthPage =
       </div>
 
       {/* Mobile Slide-in Sidebar */}
-      {mobileNav && (
-        <div className="fixed inset-0 z-50 bg-black/30 md:hidden">
-          <div
-  className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl"
-  onClick={(e) => e.stopPropagation()}
->
-  <Sidebar forceOpen />
-</div>
+     {mobileNav && (
+  <div className="fixed inset-0 z-50 md:hidden flex">
+    {/* Backdrop */}
+    <div
+      className="absolute inset-0 bg-black/30"
+      onClick={() => setMobileNav(false)}
+    />
 
-          <div
-            className="absolute inset-0"
-            onClick={() => setMobileNav(false)}
-          />
-        </div>
-      )}
+    {/* Sidebar panel */}
+    <div className="relative w-72 bg-white shadow-xl">
+      <Sidebar forceOpen />
+    </div>
+  </div>
+)}
+
     </>
   ) : null}
 

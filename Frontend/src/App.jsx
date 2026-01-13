@@ -52,19 +52,17 @@ export default function App() {
 
   {/* ========== PUBLIC WEBSITE (WITH NAVBAR) ========== */}
   <Route element={<AppLayout />}>
-    <Route
-  path="/"
-  element={
-    <PublicRoute>
-      <Home />
-    </PublicRoute>
-  }
-/>
+
+    {/* Home (redirects if logged in) */}
+    <Route element={<PublicRoute />}>
+      <Route path="/" element={<Home />} />
+    </Route>
 
     <Route path="/privacy" element={<Privacy />} />
     <Route path="/terms" element={<Terms />} />
     <Route path="/dmca" element={<DMCA />} />
     <Route path="/contact" element={<Contact />} />
+
   </Route>
 
   {/* ========== AUTH PAGES (NO NAVBAR) ========== */}

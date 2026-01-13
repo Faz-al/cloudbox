@@ -52,7 +52,15 @@ export default function App() {
 
   {/* ========== PUBLIC WEBSITE (WITH NAVBAR) ========== */}
   <Route element={<AppLayout />}>
-    <Route path="/" element={<Home />} />
+    <Route
+  path="/"
+  element={
+    <PublicRoute>
+      <Home />
+    </PublicRoute>
+  }
+/>
+
     <Route path="/privacy" element={<Privacy />} />
     <Route path="/terms" element={<Terms />} />
     <Route path="/dmca" element={<DMCA />} />

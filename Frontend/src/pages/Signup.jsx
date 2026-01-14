@@ -1,3 +1,6 @@
+import { API_BASE } from "../utils/api";
+
+
 import { useState, useEffect } from "react";
 
 import { Link } from "react-router-dom";
@@ -88,7 +91,7 @@ const passwordStrength = getPasswordStrength(password);
   try {
     setLoading(true);
 
-    const res = await fetch("http://localhost:5000/api/auth/signup/start", {
+    const res = await fetch(`${API_BASE}/auth/signup/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -122,7 +125,7 @@ const verifyOTP = async () => {
   try {
     setOtpLoading(true);
 
-    const res = await fetch("http://localhost:5000/api/auth/signup/verify", {
+    const res = await fetch(`${API_BASE}/auth/signup/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

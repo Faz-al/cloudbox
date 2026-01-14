@@ -101,9 +101,11 @@ export default function Navbar({ onMenu }) {
                   <div className="absolute right-0 mt-3 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-[fadeIn_0.12s_ease-out]">
 
                     <div className="px-4 py-3 border-b bg-gray-50">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {user?.email}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900 truncate flex items-center gap-1">
+  {user?.email}
+  <span className="text-xs text-green-600 font-medium">✔ Verified</span>
+</p>
+
                       <p className="text-xs text-gray-500 mt-0.5">
                         Secure CloudBox account
                       </p>

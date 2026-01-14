@@ -1,10 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { useAuth } from "../context/AuthContext";
+
+
+
+
+
+
+
 
 export default function Signup() {
-  const { signup } = useAuth();
+
+ const [step, setStep] = useState("form"); // form | otp | done
+const [otp, setOtp] = useState("");
+const [otpLoading, setOtpLoading] = useState(false);
+const [otpError, setOtpError] = useState("");
+const [cooldown, setCooldown] = useState(60);
+
+useEffect(() => {
+  if (step !== "otp") return;
+
+  const interval = setInterval(() => {
+    setCooldown((c) => (c > 0 ? c - 1 : 0));
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [step]);
+
+
+
+
+
+
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,8 +43,6 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
   // ===== PASSWORD STRENGTH =====
 const getPasswordStrength = (pwd) => {
   if (pwd.length === 0) return null;
@@ -36,44 +62,98 @@ const passwordStrength = getPasswordStrength(password);
 
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    if (!isValidEmail(email)) {
-  setError("Please enter a valid email address");
-  return;
-}
+  if (!isValidEmail(email)) {
+    setError("Please enter a valid email address");
+    return;
+  }
+
+  if (!email || !password || !confirmPassword) {
+    setError("All fields are required");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  if (password.length < 8) {
+    setError("Password must be at least 8 characters");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const res = await fetch("http://localhost:5000/api/auth/signup/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message || "OTP failed");
+
+    setStep("otp");
+    setCooldown(60);
+  } catch (err) {
+    setError(err.message || "Signup failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
-    if (!email || !password || !confirmPassword) {
-      setError("All fields are required");
-      return;
-    }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
-    }
+const verifyOTP = async () => {
+  setOtpError("");
 
-    try {
-      setLoading(true);
-      await signup(email, password);
-      setSuccess(true);
-    } catch (err) {
-      const msg =
-        err?.message?.toLowerCase().includes("exists")
-          ? "An account with this email already exists"
-          : "Signup failed. Please try again.";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (otp.length !== 6) {
+    setOtpError("Enter 6 digit OTP");
+    return;
+  }
+
+  try {
+    setOtpLoading(true);
+
+    const res = await fetch("http://localhost:5000/api/auth/signup/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, otp }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+
+    setStep("done");
+  } catch (err) {
+    setOtpError(err.message || "OTP verification failed");
+  } finally {
+    setOtpLoading(false);
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   return (
     <>
@@ -86,7 +166,7 @@ const passwordStrength = getPasswordStrength(password);
           {/* Card */}
           <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-8 animate-fade-up">
 
-            {!success ? (
+            {step === "form" && (
               <>
                 {/* Header */}
                 <div className="text-center mb-6">
@@ -217,25 +297,69 @@ const passwordStrength = getPasswordStrength(password);
                   We never share your data. Your files stay private.
                 </p>
               </>
-            ) : (
-              /* Success state */
-              <div className="text-center animate-fade-up">
-                <div className="text-green-600 text-4xl mb-3">✓</div>
-                <h2 className="text-xl font-semibold mb-2">
-                  Account created successfully
-                </h2>
-                <p className="text-sm text-gray-600 mb-6">
-                  Please log in to access your secure storage.
-                </p>
-
-                <Link
-                  to="/login"
-                  className="inline-block w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
-                >
-                  Go to login
-                </Link>
-              </div>
             )}
+
+{step === "otp" && (
+  <div className="text-center animate-fade-up">
+    <h2 className="text-xl font-semibold mb-2">
+      Verify your email
+    </h2>
+    <p className="text-sm text-gray-600 mb-4">
+      Enter the 6-digit code sent to <b>{email}</b>
+    </p>
+
+    <input
+      type="text"
+      maxLength={6}
+      value={otp}
+      onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+      className="w-full text-center text-xl tracking-widest px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+      placeholder="______"
+    />
+
+    {otpError && (
+      <div className="text-sm text-red-600 mt-2">{otpError}</div>
+    )}
+
+    <button
+      onClick={verifyOTP}
+      disabled={otpLoading}
+      className="w-full mt-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+    >
+      {otpLoading ? "Verifying…" : "Verify OTP"}
+    </button>
+
+    <button
+      disabled={cooldown > 0}
+      onClick={handleSubmit}
+      className="text-sm mt-4 text-blue-600 disabled:text-gray-400"
+    >
+      {cooldown > 0
+        ? `Resend in ${cooldown}s`
+        : "Resend OTP"}
+    </button>
+  </div>
+)}
+
+{step === "done" && (
+  <div className="text-center animate-fade-up">
+    <div className="text-green-600 text-4xl mb-3">✓</div>
+    <h2 className="text-xl font-semibold mb-2">
+      Account created successfully
+    </h2>
+    <p className="text-sm text-gray-600 mb-6">
+      Please log in to access your secure storage.
+    </p>
+
+    <Link
+      to="/login"
+      className="inline-block w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
+    >
+      Go to login
+    </Link>
+  </div>
+)}
+
           </div>
         </div>
       </div>

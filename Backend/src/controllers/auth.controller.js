@@ -325,7 +325,7 @@ await user.save();
 
 
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `https://app.pawsh.live/reset-password/${resetToken}`;
 await sendResetPasswordEmail(user.email, resetUrl);
 
 
@@ -340,7 +340,17 @@ await sendResetPasswordEmail(user.email, resetUrl);
 
 const resetPassword = async (req, res) => {
   try {
-    const token = decodeURIComponent(req.params.token);
+    // ✅ accept token from params OR body (hard fix)
+    const rawToken =
+      req.params.token ||
+      req.body.token ||
+      req.query.token;
+
+    if (!rawToken) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    const token = decodeURIComponent(rawToken);
 
     const hashedToken = crypto
       .createHash("sha256")

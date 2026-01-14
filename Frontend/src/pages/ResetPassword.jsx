@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from "../utils/api";
+
 
 export default function ResetPassword() {
   const { token } = useParams();
@@ -29,10 +31,11 @@ export default function ResetPassword() {
 
   try {
     await axios.post(
-      `${API_BASE}/auth/reset-password/${token}`,
-      { password },
-      { withCredentials: true }
-    );
+  `${API_BASE}/auth/reset-password/${encodeURIComponent(token)}`,
+  { password, token }, // 👈 add token here
+  { withCredentials: true }
+);
+
 
     setDone(true);
     setTimeout(() => navigate("/login"), 2500);

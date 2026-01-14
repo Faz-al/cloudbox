@@ -19,6 +19,7 @@ const {
   signupStart,
   signupVerify,
   login,
+  changePassword,
   forgotPassword,
   resetPassword,
   logout,
@@ -54,6 +55,7 @@ router.post("/logout-all", authMiddleware, logoutAll);
 
 router.post("/signup/verify", signupVerify);
 router.post("/signup/start", otpRateLimit, signupStart);
+router.post("/change-password", authMiddleware, changePassword);
 
 
 

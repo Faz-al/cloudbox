@@ -321,6 +321,60 @@ setTimeout(async () => {
   }
 };
 
+
+
+/* ================= update password ================= */
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: "Invalid data" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) {
+      return res.status(400).json({ message: "Current password incorrect" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+
+    await user.save();
+    await sendPasswordChangedEmail(user.email);
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ================= PASSWORD RESET ================= */
 
 const forgotPassword = async (req, res) => {
@@ -450,6 +504,7 @@ module.exports = {
   signupStart,
   signupVerify,
   login,
+  changePassword,
   forgotPassword,
   resetPassword,
   logout,

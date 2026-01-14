@@ -84,29 +84,35 @@ const signup = async (req, res) => {
 // send otp
 const signupStart = async (req, res) => {
   try {
-    const { email, password } = req.body;
+   const { email, password } = req.body;
 
-    if (!email || !password || password.length < 8) {
-      return res.status(400).json({ message: "Invalid data" });
-    }
+if (!email || !password || password.length < 8) {
+  return res.status(400).json({ message: "Invalid data" });
+}
 
-    const exists = await User.findOne({ email });
+const emailNormalized = email.trim().toLowerCase();
+
+
+    const exists = await User.findOne({ email: emailNormalized });
+
     if (exists) return res.status(400).json({ message: "User already exists" });
 
-    await SignupOTP.deleteOne({ email });
+    await SignupOTP.deleteOne({ email: emailNormalized });
+
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const passwordHash = await bcrypt.hash(password, 10);
     const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
 
     await SignupOTP.create({
-      email,
-      passwordHash,
+  email: emailNormalized,
+  passwordHash,
       otpHash,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
-    await sendOTPEmail(email, otp);
+    await sendOTPEmail(emailNormalized, otp);
+
 
     res.json({ message: "OTP sent" });
   } catch (err) {
@@ -122,11 +128,20 @@ const signupVerify = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    const record = await SignupOTP.findOne({ email });
+if (!email || !otp) {
+  return res.status(400).json({ message: "Invalid data" });
+}
+
+const emailNormalized = email.trim().toLowerCase();
+
+
+
+    const record = await SignupOTP.findOne({ email: emailNormalized });
+
     if (!record) return res.status(400).json({ message: "No OTP request" });
 
     if (record.expiresAt < new Date()) {
-      await SignupOTP.deleteOne({ email });
+      await SignupOTP.deleteOne({ email: emailNormalized });
       return res.status(400).json({ message: "OTP expired" });
     }
 
@@ -135,8 +150,8 @@ const signupVerify = async (req, res) => {
       return res.status(400).json({ message: "Invalid OTP" });
 
     await User.create({
-      email,
-      password: record.passwordHash,
+  email: emailNormalized,
+  password: record.passwordHash,
       storageLimit: 5 * 1024 * 1024 * 1024,
       usedStorage: 0,
       plan: "free",
@@ -144,7 +159,7 @@ const signupVerify = async (req, res) => {
       termsVersion: "2026-01",
     });
 
-    await SignupOTP.deleteOne({ email });
+    await SignupOTP.deleteOne({ email: emailNormalized });
 
     res.status(201).json({ message: "Account created" });
   } catch (err) {
@@ -236,7 +251,16 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+if (!email || !password) {
+  return res.status(400).json({ message: "Invalid credentials" });
+}
+
+const emailNormalized = email.trim().toLowerCase();
+
+
+
+    const user = await User.findOne({ email: emailNormalized });
+
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
     if (user.isSuspended)
       return res.status(403).json({ message: "Account suspended" });
@@ -302,7 +326,16 @@ setTimeout(async () => {
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+
+if (!email) {
+  return res.json({ message: "If account exists, email sent" });
+}
+
+const emailNormalized = email.trim().toLowerCase();
+
+
+    const user = await User.findOne({ email: emailNormalized });
+
     if (!user)
       return res.json({ message: "If account exists, email sent" });
 

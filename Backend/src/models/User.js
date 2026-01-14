@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
 
 
@@ -17,6 +17,15 @@ termsVersion: {
   default: "2026-01",
 },
 
+
+
+// 📧 EMAIL VERIFICATION
+isEmailVerified: {
+  type: Boolean,
+  default: false,
+},
+emailVerifyToken: String,
+emailVerifyExpires: Date,
 
 
 

@@ -115,6 +115,8 @@ const signupStart = async (req, res) => {
   }
 };
 
+
+
 // verify otp & create user
 const signupVerify = async (req, res) => {
   try {
@@ -304,13 +306,21 @@ const forgotPassword = async (req, res) => {
     if (!user)
       return res.json({ message: "If account exists, email sent" });
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    user.resetPasswordToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
-    await user.save();
+    // 🔥 clear any old reset data first
+user.resetPasswordToken = undefined;
+user.resetPasswordExpires = undefined;
+await user.save();
+
+const resetToken = crypto.randomBytes(32).toString("hex");
+
+user.resetPasswordToken = crypto
+  .createHash("sha256")
+  .update(resetToken)
+  .digest("hex");
+
+user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+await user.save();
+
 
 
 

@@ -2,19 +2,18 @@ import { useEffect, useState } from "react";
 import ChangePasswordCard from "../components/security/ChangePasswordCard";
 import ActiveSessionsCard from "../components/security/ActiveSessionsCard";
 import LogoutEverywhereCard from "../components/security/LogoutEverywhereCard";
+import { API_BASE } from "../utils/api";
 
 export default function SettingsSecurity() {
   const [sessions, setSessions] = useState([]);
 
-  const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
   useEffect(() => {
-    fetch(`${API}/api/auth/security/sessions`, {
+    fetch(`${API_BASE}/auth/security/sessions`, {
       credentials: "include",
     })
       .then((r) => r.json())
       .then(setSessions);
-  }, [API]);
+  }, []); // ✅ FIXED
 
   const formattedSessions = sessions.map((s) => ({
     id: s._id,
@@ -27,7 +26,7 @@ export default function SettingsSecurity() {
   }));
 
   const logoutDevice = (id) => {
-    fetch(`${API}/api/auth/security/sessions/${id}/logout`, {
+    fetch(`${API_BASE}/auth/security/sessions/${id}/logout`, {
       method: "POST",
       credentials: "include",
     }).then(() => {
@@ -36,7 +35,7 @@ export default function SettingsSecurity() {
   };
 
   const logoutOthers = () => {
-    fetch(`${API}/api/auth/security/logout-others`, {
+    fetch(`${API_BASE}/auth/security/logout-others`, {
       method: "POST",
       credentials: "include",
     }).then(() => {
@@ -63,9 +62,7 @@ export default function SettingsSecurity() {
         onLogoutDevice={logoutDevice}
       />
 
-    
-
-      <LogoutEverywhereCard />
+      <LogoutEverywhereCard onLogout={logoutOthers} />
 
       <div className="text-xs text-gray-400 pt-6 border-t">
         Last security review: <span className="font-medium">Just now</span>

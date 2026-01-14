@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from "../utils/api";
+
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -16,9 +18,12 @@ export default function ForgotPassword() {
     setError("");
 
     try {
-      await axios.post("http://localhost:5000/api/auth/forgot-password", {
-        email,
-      });
+     await axios.post(
+  `${API_BASE}/auth/forgot-password`,
+  { email },
+  { withCredentials: true }
+);
+
 
       // ALWAYS show success (no email existence leak)
       setSent(true);

@@ -13,39 +13,36 @@ export default function ResetPassword() {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (loading) return;
+  e.preventDefault();
+  if (loading) return;
 
-    if (password.length < 6) {
-      return setError("Password must be at least 6 characters");
-    }
+  if (password.length < 8) {
+    return setError("Password must be at least 8 characters");
+  }
 
-    if (password !== confirm) {
-      return setError("Passwords do not match");
-    }
+  if (password !== confirm) {
+    return setError("Passwords do not match");
+  }
 
-    setLoading(true);
-    setError("");
+  setLoading(true);
+  setError("");
 
-    try {
-      await axios.post(
-        "http://localhost:5000/api/auth/reset-password",
-        { password },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  try {
+    await axios.post(
+      `${API_BASE}/auth/reset-password/${token}`,
+      { password },
+      { withCredentials: true }
+    );
 
-      setDone(true);
-      setTimeout(() => navigate("/login"), 2500);
-    } catch (err) {
-      setError("Invalid or expired reset link");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setDone(true);
+    setTimeout(() => navigate("/login"), 2500);
+  } catch (err) {
+    setError("Invalid or expired reset link");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">

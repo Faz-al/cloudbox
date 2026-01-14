@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import ViewSharedFile from "./pages/ViewSharedFile";
 import DMCA from "./pages/DMCA";
+import ResetPassword from "./pages/ResetPassword";
 
 
 import Privacy from "./pages/Privacy";
@@ -64,6 +65,8 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
+    
     </Route>
 
     {/* App pages */}

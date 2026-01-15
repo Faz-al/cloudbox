@@ -68,17 +68,7 @@ useEffect(() => {
 
 
 
-  useEffect(() => {
-  const v = videoRef.current;
-  if (!v) return;
-
-  if (showAd) {
-    v.pause();
-    v.controls = false;
-  } else {
-    v.controls = true;
-  }
-}, [showAd]);
+  
 
   const isVideo = file?.type?.startsWith("video/");
   const isImage = file?.type?.startsWith("image/");
@@ -93,10 +83,10 @@ useEffect(() => {
   if (!v) return;
 
   v.pause();
-  v.controls = false;              // disable all native controls
   setCurrentGate(gate);
   setShowAd(true);
 };
+
 
 
   const finishAd = () => {
@@ -131,7 +121,7 @@ setShowAd(false);
 
 if (videoRef.current) {
   videoRef.current.controls = true;   // restore controls
-  videoRef.current.play();
+  // videoRef.current.play();
 }
 
   };
@@ -145,9 +135,11 @@ if (videoRef.current) {
 
     // If crossed into locked zone
     if (t > unlockedUntil) {
-      const gate = GATES.find(g => t <= g);
-      if (gate) requireAd(gate);
-    }
+  v.pause();
+  const gate = GATES.find(g => t <= g);
+  if (gate) requireAd(gate);
+}
+
   };
 
   const handleSeeked = () => {
@@ -256,24 +248,28 @@ if (error || !file) {
 >
 
     <video
-      draggable={false}
-      ref={videoRef}
-      src={previewUrl}
-      className="w-full max-h-[70vh]"
-      controls
-      controlsList="nodownload"
-      onTimeUpdate={handleTimeUpdate}
-      onSeeked={handleSeeked}
-      onPlay={() => {
-        const v = videoRef.current;
-        if (!v) return;
-        if (v.currentTime > unlockedUntil) {
-          v.pause();
-          const gate = GATES.find(g => v.currentTime <= g);
-          if (gate) requireAd(gate);
-        }
-      }}
-    />
+  draggable={false}
+  ref={videoRef}
+  src={previewUrl}
+  className="w-full max-h-[70vh]"
+  controls
+  playsInline
+  webkit-playsinline="true"
+  preload="metadata"
+  controlsList="nodownload"
+  onTimeUpdate={handleTimeUpdate}
+  onSeeked={handleSeeked}
+  onPlay={() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.currentTime > unlockedUntil) {
+      v.pause();
+      const gate = GATES.find(g => v.currentTime <= g);
+      if (gate) requireAd(gate);
+    }
+  }}
+/>
+
   </div>
 ) : isImage ? (
   <div

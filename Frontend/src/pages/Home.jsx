@@ -439,7 +439,7 @@ export default function Home() {
         {/* ================= VALUES ================= */}
         {/* ================= VALUES ================= */}
 {/* ================= ENTERPRISE ZERO-TRUST SECURITY CORE ================= */}
-<section className="relative h-[55vh] sm:h-[65vh] w-full overflow-hidden">
+<section className="relative h-[50vh] sm:h-[65vh] w-full overflow-hidden">
 
   {/* Background */}
   <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50 to-white" />
@@ -627,21 +627,21 @@ export default function Home() {
       height: 4px;
       background: #ef4444;
       border-radius: 999px;
-      opacity: 0;
+      opacity: 100;
       animation: threatDecay 6.5s infinite;
     }
 
     .t1 { --x:-240px; --y:180px; animation-delay:1.5s; }
     .t2 { --x:165px; --y:-240px; animation-delay:4s; }
-    .t3 { --x:-165px; --y:220px; animation-delay:4.4s; }
-    .t4 { --x:180px; --y:260px; animation-delay:6.6s; }
+    .t3 { --x:-117px; --y:220px; animation-delay:2; }
+    .t4 { --x:90px; --y:260px; animation-delay:1s; }
 
     @keyframes threatDecay {
       0% { transform: translate(var(--x),var(--y)); opacity: 0; }
       30% { opacity: 1; }
 
       /* Neutralization */
-      65% {
+      30% {
         transform: translate(
           calc(var(--x) * 0.45),
           calc(var(--y) * 0.45)

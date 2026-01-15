@@ -1,6 +1,13 @@
 import { useParams } from "react-router-dom";
 import { API_BASE } from "../utils/api";
 import { useEffect, useRef, useState } from "react";
+import AdSlot from "../components/AdSlot";
+import HouseAd from "../components/HouseAd";
+
+
+
+
+
 
 export default function ViewSharedFile() {
   const { token } = useParams();
@@ -164,11 +171,13 @@ if (videoRef.current) {
 };
 
 const startDownload = () => {
+  setShowAd(true); // show modal instantly (loading state)
+
   setTimeout(() => {
     setDownloadAdsLeft(2);
-    setShowAd(true);
   }, 5000);
 };
+
 
 
 
@@ -361,6 +370,14 @@ if (error || !file) {
 function AdModal({ onFinish, downloadAdsLeft }) {
   const [timeLeft, setTimeLeft] = useState(10);
 
+
+    const [adLoaded, setAdLoaded] = useState(false);
+  const adContainerRef = useRef(null);
+
+
+
+
+
   useEffect(() => {
     const t = setInterval(() => {
       setTimeLeft(s => {
@@ -376,6 +393,27 @@ function AdModal({ onFinish, downloadAdsLeft }) {
 
 
 
+  useEffect(() => {
+  if (!adContainerRef.current) return;
+
+  const observer = new MutationObserver(() => {
+    const iframe = adContainerRef.current.querySelector("iframe");
+    if (iframe) {
+      setAdLoaded(true);
+      observer.disconnect();
+    }
+  });
+
+  observer.observe(adContainerRef.current, {
+    childList: true,
+    subtree: true,
+  });
+
+  return () => observer.disconnect();
+}, []);
+
+
+
 
 
     
@@ -384,20 +422,65 @@ function AdModal({ onFinish, downloadAdsLeft }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-96 text-center space-y-4">
-        <h2 className="font-semibold text-lg">
-          {downloadAdsLeft > 0
-            ? `Watch ad (${downloadAdsLeft} left)`
-            : "Advertisement"}
-        </h2>
+      <div className="bg-white p-6 rounded-2xl w-96 text-center space-y-5 shadow-xl">
+       <h2 className="font-semibold text-lg">
+  {downloadAdsLeft === 0
+    ? "Preparing download…"
+    : `Watch ad (${downloadAdsLeft} left)`}
+</h2>
 
-        <div className="border h-40 flex items-center justify-center text-gray-400">
-          Ad playing…
-        </div>
+
+       <div
+  ref={adContainerRef}
+  className="relative border rounded-lg overflow-hidden h-44 bg-gray-50"
+>
+
+
+  {/* AdSense */}
+  <div className="absolute inset-0">
+    <AdSlot
+      slot="1234567890"
+      style={{ width: "100%", height: "100%" }}
+    />
+  </div>
+
+  {/* Skeleton */}
+  {!adLoaded && (
+  <div className="absolute inset-0 flex items-center justify-center animate-pulse text-gray-300 pointer-events-none">
+    Loading ad…
+  </div>
+)}
+
+
+  {/* House Ad (localhost / no fill) */}
+  {process.env.REACT_APP_ENABLE_ADS !== "true" && (
+    <div className="absolute inset-0 bg-white">
+      <HouseAd />
+    </div>
+  )}
+</div>
+
+<p className="text-xs text-gray-400">
+  Ads help keep CloudBox free and secure.
+</p>
+
+
 
         {timeLeft > 0 ? (
-          <p className="text-sm text-gray-500">Wait {timeLeft}s</p>
-        ) : (
+  <>
+    <p className="text-sm text-gray-500">
+      Please wait {timeLeft}s to continue
+    </p>
+
+    <div className="h-1 bg-gray-200 rounded overflow-hidden">
+      <div
+        className="h-full bg-blue-600 transition-all"
+        style={{ width: `${((10 - timeLeft) / 10) * 100}%` }}
+      />
+    </div>
+  </>
+) : (
+
           <button
             onClick={onFinish}
             className="bg-blue-600 text-white px-4 py-2 rounded w-full"

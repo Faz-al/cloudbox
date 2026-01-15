@@ -1,12 +1,32 @@
 import { useEffect, useState } from "react";
+import { getMe } from "../utils/api";
+
+
+
+
 
 export default function AccountSettings() {
   // TEMP (later from AuthContext / API)
-  const [email] = useState("forgot@me.com");
+ const [email, setEmail] = useState("");
 
-  useEffect(() => {
-    document.title = "Account Settings · CloudBox";
-  }, []);
+
+
+
+
+ useEffect(() => {
+  document.title = "Account Settings · CloudBox";
+
+  getMe()
+    .then((user) => {
+      if (user?.email) {
+        setEmail(user.email);
+      }
+    })
+    .catch(() => {
+      // silent fail, keep UI stable
+    });
+}, []);
+
 
   return (
     <div className="px-6 py-10 max-w-5xl animate-fade-in">
@@ -61,7 +81,8 @@ export default function AccountSettings() {
           {/* Avatar */}
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold">
-              {email[0].toUpperCase()}
+              {email ? email[0].toUpperCase() : "?"}
+
             </div>
 
             <div>
@@ -100,7 +121,7 @@ export default function AccountSettings() {
               className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Email changes are not supported yet
+              To protect your account, email updates are managed through support.
             </p>
           </div>
         </div>
@@ -140,7 +161,9 @@ export default function AccountSettings() {
             </div>
 
             <p className="text-xs text-gray-400 mt-4">
-              Preferences will be available soon
+              Preferences are automatically configured based on your device and location.
+
+
             </p>
           </div>
 

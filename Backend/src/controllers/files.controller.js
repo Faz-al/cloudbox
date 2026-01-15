@@ -308,6 +308,7 @@ const getSharedFileInfo = async (req, res) => {
 
 
 // ===== PUBLIC PREVIEW (INLINE STREAM) =====
+// ===== PUBLIC PREVIEW (INLINE STREAM + RANGE) =====
 const previewSharedFile = async (req, res) => {
   noCache(res);
 
@@ -318,29 +319,62 @@ const previewSharedFile = async (req, res) => {
       isDeleted: false,
     });
 
-
     if (!file) return res.status(404).end();
+    if (file.shareEnabled === false) return res.status(410).end();
 
-    if (file.shareEnabled === false) {
-      return res.status(410).end();
+    const range = req.headers.range;
+
+      // 🔴 iOS SAFARI: handle HEAD request WITHOUT hitting S3
+if (req.method === "HEAD") {
+  res.status(200);
+  res.setHeader("Content-Type", file.type);
+  res.setHeader("Accept-Ranges", "bytes");
+  res.setHeader("Content-Length", file.size);
+  return res.end();
+}
+
+
+
+
+    const params = {
+      Bucket: process.env.R2_BUCKET,
+      Key: file.key,
+    };
+
+    if (range) {
+      params.Range = range;
     }
 
-    const data = await s3.send(
-      new GetObjectCommand({
-        Bucket: process.env.R2_BUCKET,
-        Key: file.key,
-      })
-    );
+    const data = await s3.send(new GetObjectCommand(params));
 
+      
+
+
+
+
+    // REQUIRED FOR iOS
+    res.status(range ? 206 : 200);
     res.setHeader("Content-Type", file.type);
+    res.setHeader("Accept-Ranges", "bytes");
+
+    if (data.ContentRange) {
+      res.setHeader("Content-Range", data.ContentRange);
+    }
+
+    if (data.ContentLength) {
+      res.setHeader("Content-Length", data.ContentLength);
+    }
+
     res.setHeader("Content-Disposition", "inline");
+      res.setHeader("Cache-Control", "no-store");
 
     data.Body.pipe(res);
   } catch (err) {
-    console.error("PREVIEW ERROR", err);
+    console.error("PREVIEW SHARED ERROR:", err);
     res.status(404).end();
   }
 };
+
 
 
 
@@ -381,6 +415,7 @@ const listFiles = async (req, res) => {
 
 
 /* ===== PREVIEW FILE ===== */
+/* ===== PREVIEW FILE (RANGE STREAMING) ===== */
 const previewFile = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?._id;
@@ -389,27 +424,69 @@ const previewFile = async (req, res) => {
     const file = await File.findOne({
       _id: req.params.id,
       user: userId,
+      isDeleted: false,
     });
 
     if (!file) return res.status(404).end();
 
-    const data = await s3.send(
-      new GetObjectCommand({
-        Bucket: process.env.R2_BUCKET,
-        Key: file.key,
-      })
-    );
+    const range = req.headers.range;
 
+
+    // 🔴 iOS SAFARI: handle HEAD request WITHOUT hitting S3
+if (req.method === "HEAD") {
+  res.status(200);
+  res.setHeader("Content-Type", file.type);
+  res.setHeader("Accept-Ranges", "bytes");
+  res.setHeader("Content-Length", file.size);
+  return res.end();
+}
+
+
+
+
+
+
+
+    // iOS REQUIRES range for video
+    const params = {
+      Bucket: process.env.R2_BUCKET,
+      Key: file.key,
+    };
+
+    if (range) {
+      params.Range = range;
+    }
+
+    const data = await s3.send(new GetObjectCommand(params));
+
+
+   
+
+
+
+    // REQUIRED HEADERS
+    res.status(range ? 206 : 200);
     res.setHeader("Content-Type", file.type);
+    res.setHeader("Accept-Ranges", "bytes");
+
+    if (data.ContentRange) {
+      res.setHeader("Content-Range", data.ContentRange);
+    }
+
+    if (data.ContentLength) {
+      res.setHeader("Content-Length", data.ContentLength);
+    }
+
     res.setHeader("Content-Disposition", "inline");
-    res.setHeader("Cache-Control", "private, max-age=3600");
+      res.setHeader("Cache-Control", "no-store");
 
     data.Body.pipe(res);
-  } catch {
-    console.warn("PREVIEW SKIPPED");
+  } catch (err) {
+    console.error("PREVIEW FILE ERROR:", err);
     res.status(404).end();
   }
 };
+
 
 /* ===== UPLOAD FILE ===== */
 /* ===== UPLOAD FILE ===== */

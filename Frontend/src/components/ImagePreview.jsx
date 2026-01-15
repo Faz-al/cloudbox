@@ -11,6 +11,17 @@ export default function ImagePreview({ files = [], activeFile, onClose }) {
   const startX = useRef(0);
   const startY = useRef(0);
   const isDragging = useRef(false);
+  const touchStartX = useRef(0);
+const touchStartY = useRef(0);
+const touchEndX = useRef(0);
+const touchEndY = useRef(0);
+const videoRef = useRef(null);
+
+
+
+
+
+
 
   /* ---------- SYNC INDEX ---------- */
   useEffect(() => {
@@ -81,6 +92,57 @@ export default function ImagePreview({ files = [], activeFile, onClose }) {
 
   const onMouseUp = () => (isDragging.current = false);
 
+  const MIN_SWIPE_DISTANCE = 50;
+
+const onTouchStart = (e) => {
+  const touch = e.touches[0];
+  touchStartX.current = touch.clientX;
+  touchStartY.current = touch.clientY;
+};
+
+const onTouchMove = (e) => {
+  const touch = e.touches[0];
+  touchEndX.current = touch.clientX;
+  touchEndY.current = touch.clientY;
+};
+
+const onTouchEnd = (e) => {
+  e.stopPropagation();
+
+  const dx = touchEndX.current - touchStartX.current;
+  const dy = touchEndY.current - touchStartY.current;
+
+  if (Math.abs(dx) < Math.abs(dy)) return;
+
+  let didChange = false;
+
+  if (dx > MIN_SWIPE_DISTANCE && index > 0) {
+    setIndex((i) => i - 1);
+    didChange = true;
+  }
+
+  if (dx < -MIN_SWIPE_DISTANCE && index < files.length - 1) {
+    setIndex((i) => i + 1);
+    didChange = true;
+  }
+
+  // 👇 EXACTLY BELOW swipe logic
+  if (didChange) {
+    setTimeout(() => {
+      videoRef.current?.play().catch(() => {});
+    }, 120);
+  }
+};
+
+
+
+
+
+
+
+
+
+
   /* ---------- UI ---------- */
 
   return (
@@ -128,17 +190,23 @@ export default function ImagePreview({ files = [], activeFile, onClose }) {
 
       {/* MEDIA STAGE */}
       <div
-        className="absolute inset-0 flex items-center justify-center"
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowInfo(false);
-        }}
-        onWheel={onWheel}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-      >
+  className="absolute inset-0 flex items-center justify-center"
+  onClick={(e) => {
+    e.stopPropagation();
+    setShowInfo(false);
+  }}
+  onWheel={onWheel}
+  onMouseDown={onMouseDown}
+  onMouseMove={onMouseMove}
+  onMouseUp={onMouseUp}
+  onMouseLeave={onMouseUp}
+  onTouchStart={onTouchStart}
+  onTouchMove={onTouchMove}
+  onTouchEnd={onTouchEnd}
+  style={{ touchAction: "pan-y" }}
+
+>
+
         {index > 0 && (
           <button
             onClick={(e) => {
@@ -164,14 +232,17 @@ export default function ImagePreview({ files = [], activeFile, onClose }) {
         )}
 
         {isVideo ? (
-          <video
-            src={`${API_BASE}/files/${file._id}/preview`}
+  <video
+    ref={videoRef}
+    src={`${API_BASE}/files/${file._id}/preview`}
+    controls
+    playsInline
+    muted
+    preload="metadata"
+    className="max-w-full max-h-[80vh] rounded-2xl shadow-[0_40px_120px_rgba(0,0,0,0.6)] bg-black"
+  />
+) : (
 
-            controls
-            autoPlay
-            className="max-w-full max-h-[80vh] rounded-2xl shadow-[0_40px_120px_rgba(0,0,0,0.6)] bg-black"
-          />
-        ) : (
           <img
             src={`${API_BASE}/files/${file._id}/preview`}
 

@@ -62,6 +62,15 @@ export default function ViewSharedFile() {
 
 
 useEffect(() => {
+  propellerLoaded = false;
+  window.__lastPopAt = 0;
+}, [token]);
+
+
+
+
+
+useEffect(() => {
   const i = setInterval(() => {
     fetch(infoUrl)
       .then((r) => {
@@ -145,6 +154,8 @@ const requireAd = (gate) => {
   const finishAd = () => {
     // Download flow
     if (downloadAdsLeft > 0) {
+        firePopAd(); // ✅ ONE pop per modal ad
+
   setDownloadAdsLeft(prev => {
     const next = prev - 1;
 
@@ -213,8 +224,7 @@ if (videoRef.current) {
 
 
 
-const startDownload = () => {
-  firePopAd();              // 👈 ADD THIS
+const startDownload = () => {         
   setAdReason("download");
   setShowAd(true);
 

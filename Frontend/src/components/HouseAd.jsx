@@ -1,16 +1,14 @@
 export default function HouseAd() {
   return (
-    <div className="h-full flex flex-col items-center justify-center text-center space-y-2">
-      <div className="text-blue-600 font-semibold text-lg">☁ CloudBox</div>
-      <p className="text-sm text-gray-500">
-        Upload, share, and protect your files securely.
-      </p>
-      <a
-        href="/"
-        className="text-sm text-blue-600 underline hover:text-blue-700"
-      >
-        Upload your own files
-      </a>
+    <div className="w-full h-full flex items-center justify-center text-center p-4">
+      <div>
+        <p className="text-sm font-semibold text-gray-700">
+          CloudBox Premium
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          Faster downloads · No ads · Coming soon
+        </p>
+      </div>
     </div>
   );
 }

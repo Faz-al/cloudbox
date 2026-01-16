@@ -17,6 +17,8 @@ export default function ViewSharedFile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [disabled, setDisabled] = useState(false);
+  const [adReason, setAdReason] = useState(null); 
+
 
 
   const [showAd, setShowAd] = useState(false);
@@ -95,15 +97,17 @@ useEffect(() => {
 
   /* ============ AD ENGINE ============ */
 
-  const requireAd = (gate) => {
+ const requireAd = (gate) => {
   const v = videoRef.current;
   if (!v) return;
 
   v.pause();
-  v.controls = false;              // disable all native controls
+  v.controls = false;
   setCurrentGate(gate);
+  setAdReason("video");   // ✅ ADD THIS
   setShowAd(true);
 };
+
 
 
   const finishAd = () => {
@@ -171,12 +175,14 @@ if (videoRef.current) {
 };
 
 const startDownload = () => {
-  setShowAd(true); // show modal instantly (loading state)
+  setAdReason("download");   // ✅ ADD THIS
+  setShowAd(true);
 
   setTimeout(() => {
     setDownloadAdsLeft(2);
   }, 5000);
 };
+
 
 
 
@@ -239,6 +245,8 @@ if (error || !file) {
         {/* FILE INFO */}
 <div className="border-b pb-4 space-y-1">
 
+ 
+
             <div className="text-xs text-gray-500">
   Shared via <span className="font-semibold">CloudBox</span> ·
   <a href="/" className="text-blue-600 ml-1 hover:underline">
@@ -255,6 +263,23 @@ if (error || !file) {
             {(file.size / 1024 / 1024).toFixed(1)} MB · {file.type}
           </p>
         </div>
+
+
+             {/* SAFE ADSENSE PLACEMENT */}
+{process.env.REACT_APP_ENABLE_ADS === "true" && (
+  <div className="my-4 flex justify-center">
+    <AdSlot
+      slot="YOUR_ADSENSE_SLOT_ID"
+      style={{ width: "100%", maxWidth: 728, height: 90 }}
+    />
+  </div>
+)}
+
+
+
+
+
+
 
         {/* VIDEO / FILE */}
         {/* VIDEO / FILE */}
@@ -355,10 +380,12 @@ if (error || !file) {
 
       {showAd && (
   <AdModal
-    key={downloadAdsLeft}   // 👈 this forces fresh timer for each ad
-    onFinish={finishAd}
-    downloadAdsLeft={downloadAdsLeft}
-  />
+  key={`${adReason}-${downloadAdsLeft}`}
+  onFinish={finishAd}
+  downloadAdsLeft={downloadAdsLeft}
+  adReason={adReason}
+/>
+
 )}
 
     </div>
@@ -367,7 +394,8 @@ if (error || !file) {
 
 /* ============ AD MODAL ============ */
 
-function AdModal({ onFinish, downloadAdsLeft }) {
+function AdModal({ onFinish, downloadAdsLeft, adReason }) {
+
   const [timeLeft, setTimeLeft] = useState(10);
 
 
@@ -423,11 +451,14 @@ function AdModal({ onFinish, downloadAdsLeft }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-2xl w-96 text-center space-y-5 shadow-xl">
-       <h2 className="font-semibold text-lg">
-  {downloadAdsLeft === 0
+      <h2 className="font-semibold text-lg">
+  {adReason === "download" && downloadAdsLeft === 0
     ? "Preparing download…"
-    : `Watch ad (${downloadAdsLeft} left)`}
+    : adReason === "download"
+    ? `Watch ad (${downloadAdsLeft} left)`
+    : "Watch ad to continue watching"}
 </h2>
+
 
 
        <div
@@ -436,13 +467,13 @@ function AdModal({ onFinish, downloadAdsLeft }) {
 >
 
 
-  {/* AdSense */}
-  <div className="absolute inset-0">
-    <AdSlot
-      slot="1234567890"
-      style={{ width: "100%", height: "100%" }}
-    />
-  </div>
+      {/* POP / NON-GOOGLE AD PLACEHOLDER */}
+<div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
+  Advertisement
+</div>
+
+
+
 
   {/* Skeleton */}
   {!adLoaded && (
@@ -452,12 +483,14 @@ function AdModal({ onFinish, downloadAdsLeft }) {
 )}
 
 
-  {/* House Ad (localhost / no fill) */}
-  {process.env.REACT_APP_ENABLE_ADS !== "true" && (
-    <div className="absolute inset-0 bg-white">
-      <HouseAd />
-    </div>
-  )}
+  {process.env.REACT_APP_ENABLE_POPADS !== "true" && (
+  <div className="absolute inset-0 bg-white">
+    <HouseAd />
+  </div>
+)}
+
+
+
 </div>
 
 <p className="text-xs text-gray-400">

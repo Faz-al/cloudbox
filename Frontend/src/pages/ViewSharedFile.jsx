@@ -97,16 +97,40 @@ useEffect(() => {
 
   /* ============ AD ENGINE ============ */
 
- const requireAd = (gate) => {
+
+const firePopAd = () => {
+  if (process.env.REACT_APP_ENABLE_POPADS !== "true") return;
+
+  // Prevent double-fire
+  if (window.__lastPopAt && Date.now() - window.__lastPopAt < 60000) return;
+window.__lastPopAt = Date.now();
+
+
+  const s = document.createElement("script");
+  s.dataset.zone = "10472131";
+  s.src = "https://al5sm.com/tag.min.js";
+  s.async = true;
+
+  document.body.appendChild(s);
+};
+
+
+
+
+
+const requireAd = (gate) => {
+  firePopAd();              // 👈 ADD THIS
+
   const v = videoRef.current;
   if (!v) return;
 
   v.pause();
   v.controls = false;
   setCurrentGate(gate);
-  setAdReason("video");   // ✅ ADD THIS
+  setAdReason("video");
   setShowAd(true);
 };
+
 
 
 
@@ -174,14 +198,23 @@ if (videoRef.current) {
   }
 };
 
+
+
+
+  
+
+
+
 const startDownload = () => {
-  setAdReason("download");   // ✅ ADD THIS
+  firePopAd();              // 👈 ADD THIS
+  setAdReason("download");
   setShowAd(true);
 
   setTimeout(() => {
     setDownloadAdsLeft(2);
   }, 5000);
 };
+
 
 
 
@@ -326,6 +359,18 @@ if (error || !file) {
     <p>This file is ready to download</p>
   </div>
 )}
+
+
+{/* SAFE ADSENSE SLOT #2 – post-preview */}
+{process.env.REACT_APP_ENABLE_ADS === "true" && (
+  <div className="my-6 flex justify-center">
+    <AdSlot
+      slot="YOUR_SECOND_ADSENSE_SLOT_ID"
+      style={{ width: "100%", maxWidth: 728, height: 90 }}
+    />
+  </div>
+)}
+
 
 
 

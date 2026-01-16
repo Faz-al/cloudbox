@@ -1,16 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function AdSlot({ slot, format = "auto", style = {} }) {
+  const pushedRef = useRef(false);
+
   const adsEnabled =
     process.env.REACT_APP_ENABLE_ADS === "true" &&
     typeof window !== "undefined" &&
     window.location.hostname !== "localhost";
 
   useEffect(() => {
-    if (!adsEnabled) return;
+    if (!adsEnabled || pushedRef.current) return;
 
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
+      pushedRef.current = true;
     } catch (e) {
       // Silent fail (AdSense requirement)
     }

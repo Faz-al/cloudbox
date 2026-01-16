@@ -99,14 +99,19 @@ useEffect(() => {
 
 
 const firePopAd = () => {
-  // 🔒 HARD BLOCK outside /view/:token
-  if (window.propellerAdsDisabled) return;
-
   if (process.env.REACT_APP_ENABLE_POPADS !== "true") return;
 
   // Prevent double-fire
   if (window.__lastPopAt && Date.now() - window.__lastPopAt < 60000) return;
-  window.__lastPopAt = Date.now();
+window.__lastPopAt = Date.now();
+
+
+  const s = document.createElement("script");
+  s.dataset.zone = "10472131";
+  s.src = "https://al5sm.com/tag.min.js";
+  s.async = true;
+
+  document.body.appendChild(s);
 };
 
 

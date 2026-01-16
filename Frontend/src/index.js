@@ -5,26 +5,6 @@ import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 
-// 🔒 BLOCK PROPELLER ADS OUTSIDE /view/:token
-(function () {
-  const isPublicView = /^\/view\/[^/]+/.test(window.location.pathname);
-
-  if (!isPublicView) {
-    window.propellerAdsDisabled = true;
-
-    window.open = function () {
-      return null;
-    };
-
-    document.addEventListener(
-      "click",
-      function (e) {
-        e.stopImmediatePropagation();
-      },
-      true
-    );
-  }
-})();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 

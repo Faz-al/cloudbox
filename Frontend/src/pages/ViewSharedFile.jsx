@@ -106,12 +106,7 @@ const firePopAd = () => {
 window.__lastPopAt = Date.now();
 
 
-  const s = document.createElement("script");
-  s.dataset.zone = "10472131";
-  s.src = "https://al5sm.com/tag.min.js";
-  s.async = true;
-
-  document.body.appendChild(s);
+  
 };
 
 

@@ -494,8 +494,16 @@ function AdModal({ onFinish, downloadAdsLeft, adReason }) {
 
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-2xl w-96 text-center space-y-5 shadow-xl">
+    <div
+  className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
+  onClick={(e) => e.stopPropagation()}
+>
+
+     <div
+  className="bg-white p-6 rounded-2xl w-96 text-center space-y-5 shadow-xl"
+  onClick={(e) => e.stopPropagation()}
+>
+
       <h2 className="font-semibold text-lg">
   {adReason === "download" && downloadAdsLeft === 0
     ? "Preparing download…"
@@ -513,7 +521,8 @@ function AdModal({ onFinish, downloadAdsLeft, adReason }) {
 
 
       {/* POP / NON-GOOGLE AD PLACEHOLDER */}
-<div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
+<div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500 pointer-events-none">
+
   Advertisement
 </div>
 

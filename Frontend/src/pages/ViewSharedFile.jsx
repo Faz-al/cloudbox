@@ -6,6 +6,8 @@ import HouseAd from "../components/HouseAd";
 
 
 
+// 🔒 Propeller load guard (GLOBAL for this page)
+let propellerLoaded = false;
 
 
 
@@ -101,18 +103,24 @@ useEffect(() => {
 const firePopAd = () => {
   if (process.env.REACT_APP_ENABLE_POPADS !== "true") return;
 
-  // Prevent double-fire
+  // 1️⃣ Load Propeller script ONLY ONCE
+  if (!propellerLoaded) {
+    const s = document.createElement("script");
+    s.dataset.zone = "10472131";
+    s.src = "https://al5sm.com/tag.min.js";
+    s.async = true;
+
+    document.body.appendChild(s);
+    propellerLoaded = true;
+
+    return; // ⛔ first interaction only loads script
+  }
+
+  // 2️⃣ Throttle pops (60s)
   if (window.__lastPopAt && Date.now() - window.__lastPopAt < 60000) return;
-window.__lastPopAt = Date.now();
-
-
-  const s = document.createElement("script");
-  s.dataset.zone = "10472131";
-  s.src = "https://al5sm.com/tag.min.js";
-  s.async = true;
-
-  document.body.appendChild(s);
+  window.__lastPopAt = Date.now();
 };
+
 
 
 

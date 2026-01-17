@@ -5,6 +5,10 @@ import { Link } from "react-router-dom";
 import FeatureCard from "../components/FeatureCard";
 import { useEffect } from "react";
 import ZeroTrustCollapseField from "../components/ZeroTrustCollapseField";
+import IntentFieldSystem from "../components/IntentFieldSystem";
+
+
+
 
 
 export default function Home() {
@@ -169,7 +173,7 @@ export default function Home() {
 
 
         {/* ================= PRODUCT DEMO ================= */}
-      {/* ================= PRODUCT DEMO ================= */}
+     {/* ================= PRODUCT DEMO ================= */}
 <section className="relative pb-24 sm:pb-32 -mt-8 sm:-mt-12 overflow-hidden demo-section demo-enter">
   {/* Ambient background */}
   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-100/40 to-transparent" />
@@ -177,9 +181,8 @@ export default function Home() {
   <div className="relative max-w-6xl mx-auto px-4">
     {/* Section header */}
     <div className="text-center mb-10 sm:mb-14">
-      <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
-        Security by default
-      </p>
+      
+
       <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
         Every file is secured the moment it arrives
       </h2>
@@ -516,131 +519,28 @@ export default function Home() {
        {/* ================= HOW IT WORKS ================= */}
 {/* ================= HOW IT WORKS ================= */}
 {/* ================= HOW IT WORKS ================= */}
-<section className="pb-24 sm:pb-40 relative">
-  <div className="max-w-5xl mx-auto px-4 text-center">
 
-    {/* Header */}
-    <div className="mb-20 sm:mb-28 reveal">
-      <p className="text-[10px] sm:text-xs uppercase tracking-widest text-gray-400 mb-4">
-        System lifecycle
-      </p>
+<section className="relative pb-24 sm:pb-32 -mt-8 sm:-mt-12 overflow-hidden text-center">
 
-      <h2 className="text-xl sm:text-3xl font-semibold text-gray-900 mb-6 leading-snug">
-        Security exists
-        <br />
-        before anything else
-      </h2>
 
-      <p className="text-sm sm:text-base text-gray-600 max-w-xl sm:max-w-2xl mx-auto">
-        Protection is not initiated by action.
-        <br />
-        It is present by default.
-      </p>
-    </div>
+    {/* Headline */}
+    <h2 className="text-2xl sm:text-3xl font-semibold  text-gray-900 mb-6 leading-snug">
+      How It works.
+    </h2>
 
-    {/* Flow */}
-    <div className="relative">
 
-      {/* Vertical guide */}
-      <div className="hidden sm:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gray-200 to-transparent" />
+    
+    
+      <IntentFieldSystem />
+      
 
-      <div className="space-y-16 sm:space-y-24">
+      
 
-        {/* State 01 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-16 items-center">
-          <div className="text-left sm:text-right sm:pr-20 reveal">
-            <p className="text-[10px] sm:text-xs text-gray-400 tracking-wide mb-3">
-              Initial state
-            </p>
-            <p className="text-base sm:text-lg font-medium text-gray-900 mb-2">
-              Secure environment created
-            </p>
-            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-              Isolation and encryption contexts
-              are established before any data
-              or access exists.
-            </p>
-          </div>
+    
 
-          <div className="reveal bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-5 sm:p-7 shadow-[0_18px_52px_-38px_rgba(0,0,0,0.28)] font-mono text-[11px] sm:text-xs text-gray-700 text-left">
-            <p>environment: sealed</p>
-            <p>encryption_context: active</p>
-            <p>access_state: none</p>
-          </div>
-        </div>
-
-        {/* State 02 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-16 items-center">
-          <div className="order-last sm:order-first reveal bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-5 sm:p-7 shadow-[0_18px_52px_-38px_rgba(0,0,0,0.28)] font-mono text-[11px] sm:text-xs text-gray-700 text-left">
-            <p>data_state: sealed</p>
-            <p>visibility: opaque</p>
-            <p>storage_zone: isolated</p>
-          </div>
-
-          <div className="sm:pl-20 reveal text-left">
-            <p className="text-[10px] sm:text-xs text-gray-400 tracking-wide mb-3">
-              Admission
-            </p>
-            <p className="text-base sm:text-lg font-medium text-gray-900 mb-2">
-              Data enters a protected state
-            </p>
-            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-              Files never transition through
-              an unprotected phase.
-              <br />
-              They arrive already secured.
-            </p>
-          </div>
-        </div>
-
-        {/* State 03 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-16 items-center">
-          <div className="text-left sm:text-right sm:pr-20 reveal">
-            <p className="text-[10px] sm:text-xs text-gray-400 tracking-wide mb-3">
-              Access boundary
-            </p>
-            <p className="text-base sm:text-lg font-medium text-gray-900 mb-2">
-              Control is explicit
-            </p>
-            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-              Data becomes readable only
-              through deliberate,
-              authenticated user actions.
-            </p>
-          </div>
-
-          <div className="reveal bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-5 sm:p-7 shadow-[0_18px_52px_-38px_rgba(0,0,0,0.28)] font-mono text-[11px] sm:text-xs text-gray-700 text-left">
-            <p>access_request: user_initiated</p>
-            <p>session_scope: constrained</p>
-            <p>visibility: owner_only</p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  {/* Animations */}
-  <style>{`
-    .reveal {
-      opacity: 0;
-      transform: translateY(20px) scale(0.98);
-      transition:
-        opacity 0.9s ease,
-        transform 0.9s ease;
-    }
-
-    .reveal.is-visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-
-    @media (max-width: 640px) {
-      .reveal {
-        transform: translateY(14px);
-      }
-    }
-  `}</style>
+    
+    
+  
 </section>
 
 

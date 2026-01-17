@@ -23,17 +23,22 @@ export default function Navbar({ onMenu }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200">
-      <div className="h-14 px-4 sm:px-6 flex items-center justify-between">
+    <header className="sticky top-0 z-40 border-b border-gray-200/70 bg-white/70 backdrop-blur-xl">
+      <div className="h-16 px-4 sm:px-6 flex items-center justify-between">
 
         {/* LEFT */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {user && (
             <button
               onClick={onMenu}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition"
+              className="md:hidden p-2 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition"
             >
-              <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="w-5 h-5 text-gray-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -41,13 +46,13 @@ export default function Navbar({ onMenu }) {
 
           <Link
             to={user ? "/dashboard" : "/"}
-            className="text-base font-semibold tracking-tight text-gray-900"
+            className="text-[15px] font-semibold tracking-tight text-gray-900 hover:opacity-80 transition"
           >
             CloudBox Pro
           </Link>
 
           {activeUploads > 0 && (
-            <span className="ml-2 flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+            <span className="flex items-center gap-2 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
               <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
               Uploading
             </span>
@@ -60,14 +65,15 @@ export default function Navbar({ onMenu }) {
             <>
               <Link
                 to="/login"
-                className="text-sm text-gray-600 hover:text-gray-900 transition"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition"
               >
                 Login
               </Link>
 
               <Link
                 to="/signup"
-                className="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-1.5 rounded-lg text-sm font-medium shadow-sm"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white
+                           bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow transition"
               >
                 Sign up
               </Link>
@@ -76,7 +82,7 @@ export default function Navbar({ onMenu }) {
             <>
               <Link
                 to="/upgrade"
-                className="hidden sm:inline text-sm text-gray-600 hover:text-gray-900 transition"
+                className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-gray-900 transition"
               >
                 Upgrade
               </Link>
@@ -85,7 +91,11 @@ export default function Navbar({ onMenu }) {
               <div className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center text-sm font-semibold shadow-sm hover:shadow transition"
+                  className="w-9 h-9 rounded-full
+                             bg-gradient-to-br from-blue-600 to-blue-500
+                             text-white text-sm font-semibold
+                             flex items-center justify-center
+                             shadow-sm hover:shadow-md transition"
                 >
                   {user?.email?.[0]?.toUpperCase() || "•"}
                 </button>
@@ -98,14 +108,19 @@ export default function Navbar({ onMenu }) {
                 )}
 
                 {profileOpen && (
-                  <div className="absolute right-0 mt-3 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-[fadeIn_0.12s_ease-out]">
+                  <div className="absolute right-0 mt-3 w-64 rounded-2xl
+                                  bg-white border border-gray-200/80
+                                  shadow-[0_12px_40px_rgba(0,0,0,0.12)]
+                                  z-50 overflow-hidden
+                                  animate-[fadeIn_0.12s_ease-out]">
 
-                    <div className="px-4 py-3 border-b bg-gray-50">
+                    <div className="px-4 py-3 bg-gray-50 border-b">
                       <p className="text-sm font-medium text-gray-900 truncate flex items-center gap-1">
-  {user?.email}
-  <span className="text-xs text-green-600 font-medium">✔ Verified</span>
-</p>
-
+                        {user?.email}
+                        <span className="text-xs text-green-600 font-medium">
+                          ✔ Verified
+                        </span>
+                      </p>
                       <p className="text-xs text-gray-500 mt-0.5">
                         Secure CloudBox account
                       </p>
@@ -116,7 +131,8 @@ export default function Navbar({ onMenu }) {
                         setProfileOpen(false);
                         navigate("/account");
                       }}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition"
+                      className="w-full text-left px-4 py-2.5 text-sm
+                                 hover:bg-gray-50 transition"
                     >
                       Account
                     </button>
@@ -127,7 +143,8 @@ export default function Navbar({ onMenu }) {
                           setProfileOpen(false);
                           navigate("/settings/security");
                         }}
-                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition"
+                        className="w-full text-left px-4 py-2.5 text-sm
+                                   hover:bg-gray-50 transition"
                       >
                         Security
                       </button>
@@ -143,12 +160,12 @@ export default function Navbar({ onMenu }) {
                     <div className="border-t">
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+                        className="w-full text-left px-4 py-2.5 text-sm
+                                   text-red-600 hover:bg-red-50 transition"
                       >
                         Log out
                       </button>
                     </div>
-
                   </div>
                 )}
               </div>

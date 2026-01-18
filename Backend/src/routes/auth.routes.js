@@ -19,12 +19,17 @@ const {
   signupStart,
   signupVerify,
   login,
+  verifyLoginOTP,
+  resendLoginOTP,
+  toggleEmail2FA,
   changePassword,
   forgotPassword,
   resetPassword,
   logout,
   logoutAll
 } = require("../controllers/auth.controller");
+
+
 
 
 
@@ -50,9 +55,13 @@ router.post("/security/sessions/:id/logout", authMiddleware, async (req, res) =>
 
 router.post("/signup", signup);
 router.post("/login", login);
+router.post("/login/2fa", verifyLoginOTP);
+router.post("/login/2fa/resend", resendLoginOTP);
+
+
 router.post("/logout", logout);
 router.post("/logout-all", authMiddleware, logoutAll);
-
+router.post("/security/2fa-toggle", authMiddleware, toggleEmail2FA);
 router.post("/signup/verify", signupVerify);
 router.post("/signup/start", otpRateLimit, signupStart);
 router.post("/change-password", authMiddleware, changePassword);
@@ -68,8 +77,9 @@ router.post("/reset-password/:token", resetPassword);
 router.get("/me", authMiddleware, securityTracker, async (req, res) => {
 
   const user = await User.findById(req.user.id).select(
-    "_id email storageLimit usedStorage plan"
-  );
+  "_id email storageLimit usedStorage plan email2FAEnabled"
+);
+
 
   if (!user) {
     return res.status(404).json({ message: "User not found" });

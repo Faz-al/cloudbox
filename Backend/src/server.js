@@ -84,13 +84,12 @@ app.use("/api/dmca", dmcaRoutes);
 app.use("/api/admin/dmca", adminDmcaRoutes);
 
 
-app.use("/api/auth/me", authMiddleware, securityTracker);
 app.use("/api/files", authMiddleware, securityTracker);
 
 
 /* ===== HEALTH CHECK ===== */
 app.get("/", (req, res) => {
-  res.send("CloudBox API is running");
+  res.send("SafeVault API is running");
 });
 
 

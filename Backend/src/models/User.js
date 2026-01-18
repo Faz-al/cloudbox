@@ -1,3 +1,6 @@
+console.log("🔥 USER MODEL LOADED FROM:", __filename);
+
+
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -26,6 +29,13 @@ isEmailVerified: {
 },
 emailVerifyToken: String,
 emailVerifyExpires: Date,
+
+
+// 🔐 EMAIL 2FA
+email2FAEnabled: {
+  type: Boolean,
+  default: false,
+},
 
 
 

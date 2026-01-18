@@ -79,6 +79,15 @@ export const changePassword = (currentPassword, newPassword) =>
   });
 
 
+export const toggleEmail2FA = (body = {}) =>
+  apiFetch("/auth/security/2fa-toggle", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+
+
+
 
 /* ===== FILES ===== */
 export const getFiles = (query = "") =>

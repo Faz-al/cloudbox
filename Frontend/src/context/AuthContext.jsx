@@ -67,31 +67,47 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-  try {
-    await apiLogin(email, password);
+  const res = await apiLogin(email, password);
 
-    const data = await getMe(); // will throw 403 if suspended
-
-    setSuspended(false);
-    setUser({
-      id: data._id || data.id,
-      email: data.email,
-      storageLimit: data.storageLimit,
-      usedStorage: data.usedStorage,
-      plan: data.plan,
-    });
-  } catch (err) {
-  if (err.status === 403 || err.data?.message === "Account suspended") {
-    // 🚫 suspended account
-    setSuspended(true);
-    setUser(null);
-    return; // do NOT throw
-  }
-
-  throw err; // real login error
+  // 🔐 2FA required
+  if (res?.requires2FA === true) {
+  return {
+    requires2FA: true,
+    userId: res.userId,
+  };
 }
 
+
+  // normal login
+  const data = await getMe();
+
+  setSuspended(false);
+  setUser({
+    id: data._id || data.id,
+    email: data.email,
+    storageLimit: data.storageLimit,
+    usedStorage: data.usedStorage,
+    plan: data.plan,
+  });
+
+  return { success: true };
 };
+
+
+const refreshUser = async () => {
+  const data = await getMe();
+
+  setSuspended(false);
+  setUser({
+    id: data._id || data.id,
+    email: data.email,
+    storageLimit: data.storageLimit,
+    usedStorage: data.usedStorage,
+    plan: data.plan,
+  });
+};
+
+
 
 
 
@@ -142,7 +158,8 @@ if (suspended) {
 
 
   return (
-    <AuthContext.Provider value={{ user, loading, signup, login, logout, suspended }}>
+    <AuthContext.Provider value={{ user, loading, signup, login, logout, refreshUser, suspended }}>
+
 
       {children}
     </AuthContext.Provider>

@@ -84,6 +84,16 @@ const fileSchema = new mongoose.Schema(
   index: true,
 },
 
+isFlagged: {
+  type: Boolean,
+  default: false,
+},
+flagReason: String,
+flaggedAt: Date,
+flaggedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Admin",
+},
 
 
     shareToken: {

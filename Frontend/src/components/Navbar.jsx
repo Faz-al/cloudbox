@@ -3,6 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FEATURES } from "../config/features";
 import { subscribeUploads, getActiveCount } from "../utils/uploadManager";
+import SafeVaultLogo from "../assets/logo/safevault-logo.svg";
+
+
+
+
+
+
 
 export default function Navbar({ onMenu }) {
   const navigate = useNavigate();
@@ -44,12 +51,29 @@ export default function Navbar({ onMenu }) {
             </button>
           )}
 
-          <Link
-            to={user ? "/dashboard" : "/"}
-            className="text-[15px] font-semibold tracking-tight text-gray-900 hover:opacity-80 transition"
-          >
-            CloudBox Pro
-          </Link>
+     <Link
+  to={user ? "/dashboard" : "/"}
+  className="flex items-center hover:opacity-80 transition"
+>
+  <div className="flex items-center py-[6px]">
+    <img
+  src={SafeVaultLogo}
+  alt="SafeVault"
+  className="w-[200px] h-auto mt-[15px] -ml-[25px]"
+/>
+
+  </div>
+</Link>
+
+
+
+
+
+
+
+
+
+
 
           {activeUploads > 0 && (
             <span className="flex items-center gap-2 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">

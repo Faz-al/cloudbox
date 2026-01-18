@@ -1,3 +1,7 @@
+
+console.log("CONNECTED TO DB:", process.env.MONGO_URI);
+
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -69,6 +73,8 @@ const sendLoginAlertEmail = async ({ email, ip, browser, os, location }) => {
     `,
   });
 };
+
+
 
 
 
@@ -171,6 +177,9 @@ const emailNormalized = email.trim().toLowerCase();
 
 
 
+
+
+
 // SendResetpasswordEmail
 
 
@@ -235,6 +244,27 @@ const sendPasswordChangedEmail = async (email) => {
 
 
 
+const sendLoginOTPEmail = async (email, otp) => {
+  await resend.emails.send({
+    from: "CloudBox <no-reply@pawsh.live>",
+    to: email,
+    subject: "Your CloudBox login code",
+    html: `
+      <div style="font-family: Arial, sans-serif;">
+        <h2>Login verification</h2>
+        <p>Use this code to complete your login:</p>
+        <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">
+          ${otp}
+        </div>
+        <p>This code expires in 5 minutes.</p>
+      </div>
+    `,
+  });
+};
+
+
+
+
 
 
 
@@ -259,14 +289,68 @@ const emailNormalized = email.trim().toLowerCase();
 
 
 
-    const user = await User.findOne({ email: emailNormalized });
+const user = await User.findOne({ email: emailNormalized });
+
+
+
+    console.log("LOGIN USER ID:", user?._id.toString());
+
+
+
+
 
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
     if (user.isSuspended)
       return res.status(403).json({ message: "Account suspended" });
 
     const match = await bcrypt.compare(password, user.password);
+
+
+    console.log("=== LOGIN DEBUG ===");
+console.log("Email:", user.email);
+console.log("email2FAEnabled value:", user.email2FAEnabled);
+console.log("email2FAEnabled type:", typeof user.email2FAEnabled);
+
+
+
+
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
+
+
+    // 🔐 EMAIL 2FA CHECK (LOGIN ONLY)
+if (user.email2FAEnabled) {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+  const LoginOTP = require("../models/LoginOTP");
+  console.log("DB USER ID:", user._id.toString());
+console.log("DB EMAIL:", user.email);
+console.log("DB email2FAEnabled:", user.email2FAEnabled);
+
+  // clear old OTPs
+  await LoginOTP.deleteMany({ userId: user._id });
+
+  await LoginOTP.create({
+    userId: user._id,
+    otpHash,
+    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+  });
+
+  await sendLoginOTPEmail(user.email, otp);
+
+  return res.json({
+    requires2FA: true,
+    userId: user._id,
+  });
+}
+
+
+
+
+
+
+
+
 
     const token = jwt.sign(
       { id: user._id, email: user.email, tokenVersion: user.tokenVersion || 0 },
@@ -412,7 +496,8 @@ await user.save();
 
 
 
-    const resetUrl = `https://app.pawsh.live/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
 await sendResetPasswordEmail(user.email, resetUrl);
 
 
@@ -499,14 +584,157 @@ const logoutAll = async (req, res) => {
 };
 
 
-module.exports = {
-  signup,
-  signupStart,
-  signupVerify,
-  login,
-  changePassword,
-  forgotPassword,
-  resetPassword,
-  logout,
-  logoutAll,
+
+const verifyLoginOTP = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(400).json({ message: "Invalid data" });
+    }
+
+    const LoginOTP = require("../models/LoginOTP");
+
+    const record = await LoginOTP.findOne({ userId });
+    if (!record || record.expiresAt < new Date()) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+    if (otpHash !== record.otpHash) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    await LoginOTP.deleteMany({ userId });
+
+    const user = await User.findById(userId);
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, tokenVersion: user.tokenVersion || 0 },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.cookie("token", token, cookieOptions);
+
+    res.json({ message: "Login successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
+
+
+const toggleEmail2FA = async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+
+    const user = await User.findById(req.user.id).select("password email2FAEnabled");
+
+
+
+    // 🔐 If disabling 2FA, require password
+    if (user.email2FAEnabled) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          message: "Password required to disable 2FA",
+        });
+      }
+
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if (!match) {
+        return res.status(400).json({
+          message: "Incorrect password",
+        });
+      }
+    }
+
+    // toggle
+    user.email2FAEnabled = !user.email2FAEnabled;
+    await user.save();
+
+    res.json({ enabled: user.email2FAEnabled });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+
+const resendLoginOTP = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const LoginOTP = require("../models/LoginOTP");
+    const user = await User.findById(userId);
+
+    if (!user || !user.email2FAEnabled) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    // 🔒 cooldown check (30 seconds)
+    const lastOtp = await LoginOTP.findOne({ userId }).sort({ createdAt: -1 });
+
+    if (lastOtp) {
+      const secondsSinceLast =
+        (Date.now() - new Date(lastOtp.createdAt).getTime()) / 1000;
+
+      if (secondsSinceLast < 30) {
+        return res.status(429).json({
+          message: `Please wait ${Math.ceil(30 - secondsSinceLast)} seconds before resending OTP`,
+        });
+      }
+    }
+
+    // ❌ invalidate previous OTPs
+    await LoginOTP.deleteMany({ userId });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+    await LoginOTP.create({
+      userId,
+      otpHash,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    await sendLoginOTPEmail(user.email, otp);
+
+    res.json({ message: "OTP resent" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+module.exports.signup = signup;
+module.exports.signupStart = signupStart;
+module.exports.signupVerify = signupVerify;
+module.exports.login = login;
+module.exports.verifyLoginOTP = verifyLoginOTP;
+module.exports.resendLoginOTP = resendLoginOTP;
+module.exports.toggleEmail2FA = toggleEmail2FA;
+module.exports.changePassword = changePassword;
+module.exports.forgotPassword = forgotPassword;
+module.exports.resetPassword = resetPassword;
+module.exports.logout = logout;
+module.exports.logoutAll = logoutAll;
+

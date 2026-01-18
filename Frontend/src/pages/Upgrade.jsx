@@ -21,7 +21,7 @@ export default function Upgrade() {
     </p>
 
     <a
-      href="mailto:support@pawsh.live"
+      href="mailto:support@safevault.in"
       className="inline-block mt-6 px-6 py-3 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-black transition"
     >
       Contact support

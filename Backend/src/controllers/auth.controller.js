@@ -33,7 +33,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendOTPEmail = async (email, otp) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@pawsh.live>",
+    from: "CloudBox <no-reply@safevault.in>",
     to: email,
     subject: "Your CloudBox verification code",
     html: `
@@ -52,7 +52,7 @@ const sendOTPEmail = async (email, otp) => {
 
 const sendLoginAlertEmail = async ({ email, ip, browser, os, location }) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@pawsh.live>",
+    from: "CloudBox <no-reply@safevault.in>",
     to: email,
     subject: "New login to your CloudBox account",
     html: `
@@ -185,7 +185,7 @@ const emailNormalized = email.trim().toLowerCase();
 
 const sendResetPasswordEmail = async (email, resetUrl) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@pawsh.live>",
+    from: "CloudBox <no-reply@safevault.in>",
     to: email,
     subject: "Reset your CloudBox password",
     html: `
@@ -224,7 +224,7 @@ const sendResetPasswordEmail = async (email, resetUrl) => {
 
 const sendPasswordChangedEmail = async (email) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@pawsh.live>",
+    from: "CloudBox <no-reply@safevault.in>",
     to: email,
     subject: "Your CloudBox password was changed",
     html: `
@@ -246,7 +246,7 @@ const sendPasswordChangedEmail = async (email) => {
 
 const sendLoginOTPEmail = async (email, otp) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@pawsh.live>",
+    from: "CloudBox <no-reply@safevault.in>",
     to: email,
     subject: "Your CloudBox login code",
     html: `

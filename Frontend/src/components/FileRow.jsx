@@ -205,6 +205,12 @@ const toggleShare = async () => {
   )}
 
   {onVault && <Action onClick={() => onVault(file._id)}>Vault</Action>}
+  {onUnvault && (
+  <Action onClick={() => onUnvault(file._id)}>
+    Remove from Vault
+  </Action>
+)}
+
   {onRestore && <Action onClick={() => onRestore(file._id)}>Restore</Action>}
   {onDelete && (
     <Action danger onClick={() => onDelete(file._id)}>
@@ -249,6 +255,21 @@ const toggleShare = async () => {
           Move to Vault
         </ActionSheet>
       )}
+
+
+       {onUnvault && (
+  <ActionSheet
+    onClick={() => {
+      onUnvault(file._id);
+      setMenuOpen(false);
+    }}
+  >
+    Remove from Vault
+  </ActionSheet>
+)}
+
+
+
 
       {onRestore && (
         <ActionSheet onClick={() => { onRestore(file._id); setMenuOpen(false); }}>

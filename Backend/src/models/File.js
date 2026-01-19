@@ -104,11 +104,6 @@ flaggedBy: {
     },
 
 
-  shareEnabled: {
-  type: Boolean,
-  default: true,
-  index: true,
-  },
 
 
 

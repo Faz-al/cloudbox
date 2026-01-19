@@ -8,6 +8,8 @@
 
 
 
+
+
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
@@ -17,7 +19,19 @@ const authMiddleware = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized" });
+      
     }
+
+
+    if (!process.env.JWT_SECRET) {
+  return res.status(500).json({ message: "Auth misconfigured" });
+}
+
+    
+
+
+
+
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

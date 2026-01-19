@@ -1,5 +1,4 @@
 
-console.log("CONNECTED TO DB:", process.env.MONGO_URI);
 
 
 const bcrypt = require("bcryptjs");
@@ -33,12 +32,12 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendOTPEmail = async (email, otp) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@safevault.in>",
+    from: "SafeVault <no-reply@safevault.in>",
     to: email,
-    subject: "Your CloudBox verification code",
+    subject: "Your SafeVault verification code",
     html: `
       <div style="font-family: Arial, sans-serif;">
-        <h2>Your CloudBox OTP</h2>
+        <h2>Your SafeVault OTP</h2>
         <p>Use the code below to verify your email:</p>
         <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">
           ${otp}
@@ -52,13 +51,13 @@ const sendOTPEmail = async (email, otp) => {
 
 const sendLoginAlertEmail = async ({ email, ip, browser, os, location }) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@safevault.in>",
+    from: "SafeVault <no-reply@safevault.in>",
     to: email,
-    subject: "New login to your CloudBox account",
+    subject: "New login to your SafeVault account",
     html: `
       <div style="font-family: Arial, sans-serif;">
         <h2>New login detected</h2>
-        <p>A new device just signed in to your CloudBox account.</p>
+        <p>A new device just signed in to your SafeVault account.</p>
 
         <ul>
           <li><b>Browser:</b> ${browser}</li>
@@ -185,13 +184,13 @@ const emailNormalized = email.trim().toLowerCase();
 
 const sendResetPasswordEmail = async (email, resetUrl) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@safevault.in>",
+    from: "SafeVault <no-reply@safevault.in>",
     to: email,
-    subject: "Reset your CloudBox password",
+    subject: "Reset your SafeVault password",
     html: `
       <div style="font-family: Arial, sans-serif;">
         <h2>Password reset request</h2>
-        <p>You requested to reset your CloudBox password.</p>
+        <p>You requested to reset your SafeVault password.</p>
 
         <p>
           <a
@@ -224,13 +223,13 @@ const sendResetPasswordEmail = async (email, resetUrl) => {
 
 const sendPasswordChangedEmail = async (email) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@safevault.in>",
+    from: "SafeVault <no-reply@safevault.in>",
     to: email,
-    subject: "Your CloudBox password was changed",
+    subject: "Your SafeVault password was changed",
     html: `
       <div style="font-family: Arial, sans-serif;">
         <h2>Password changed</h2>
-        <p>Your CloudBox account password was successfully changed.</p>
+        <p>Your SafeVault account password was successfully changed.</p>
         <p>If this was you, no action is needed.</p>
         <p style="color:#b91c1c;">
           If you did NOT change your password, please reset it immediately.
@@ -246,9 +245,9 @@ const sendPasswordChangedEmail = async (email) => {
 
 const sendLoginOTPEmail = async (email, otp) => {
   await resend.emails.send({
-    from: "CloudBox <no-reply@safevault.in>",
+    from: "SafeVault <no-reply@safevault.in>",
     to: email,
-    subject: "Your CloudBox login code",
+    subject: "Your SafeVault login code",
     html: `
       <div style="font-family: Arial, sans-serif;">
         <h2>Login verification</h2>
@@ -293,7 +292,6 @@ const user = await User.findOne({ email: emailNormalized });
 
 
 
-    console.log("LOGIN USER ID:", user?._id.toString());
 
 
 
@@ -305,11 +303,6 @@ const user = await User.findOne({ email: emailNormalized });
 
     const match = await bcrypt.compare(password, user.password);
 
-
-    console.log("=== LOGIN DEBUG ===");
-console.log("Email:", user.email);
-console.log("email2FAEnabled value:", user.email2FAEnabled);
-console.log("email2FAEnabled type:", typeof user.email2FAEnabled);
 
 
 
@@ -323,9 +316,6 @@ if (user.email2FAEnabled) {
   const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
 
   const LoginOTP = require("../models/LoginOTP");
-  console.log("DB USER ID:", user._id.toString());
-console.log("DB EMAIL:", user.email);
-console.log("DB email2FAEnabled:", user.email2FAEnabled);
 
   // clear old OTPs
   await LoginOTP.deleteMany({ userId: user._id });
@@ -608,6 +598,11 @@ const verifyLoginOTP = async (req, res) => {
     await LoginOTP.deleteMany({ userId });
 
     const user = await User.findById(userId);
+
+    if (!user || user.isSuspended) {
+  return res.status(403).json({ message: "Account suspended" });
+}
+
 
     const token = jwt.sign(
       { id: user._id, email: user.email, tokenVersion: user.tokenVersion || 0 },

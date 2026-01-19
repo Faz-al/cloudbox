@@ -22,11 +22,7 @@ module.exports = async function securityTracker(req, res, next) {
 
     let location = "Unknown";
 
-    try {
-      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-      const geo = await geoRes.json();
-      location = `${geo.city || "Unknown"}, ${geo.country_name || "Unknown"}`;
-    } catch {}
+   
 
     let session = await SecuritySession.findOne({
       userId: req.user.id,

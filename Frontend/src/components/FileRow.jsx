@@ -3,6 +3,23 @@ import { API_BASE } from "../utils/api";
 import { useState } from "react";
 
 
+function formatSize(bytes) {
+  if (bytes === 0) return "0 KB";
+
+  const KB = 1024;
+  const MB = KB * 1024;
+  const GB = MB * 1024;
+
+  if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
+  if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
+  return (bytes / KB).toFixed(0) + " KB";
+}
+
+
+
+
+
+
 export default function FileRow({
   file,
   selected,
@@ -165,10 +182,11 @@ const toggleShare = async () => {
   </span>
 
   {!file.isFolder && (
-    <span className="text-xs text-gray-400">
-      {(file.size / (1024 * 1024)).toFixed(2)} MB
-    </span>
-  )}
+  <span className="text-xs text-gray-400">
+    {formatSize(file.size)}
+  </span>
+)}
+
 </div>
 
       </div>

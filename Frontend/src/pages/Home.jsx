@@ -88,7 +88,7 @@ export default function Home() {
     </h1>
 
     <p className="text-gray-600 text-base sm:text-lg max-w-xl mx-auto mb-10 hero-subtitle">
-      CloudBox encrypts, protects, and isolates your files by default —
+      SafeVault encrypts, protects, and isolates your files by default —
       so only you control your data, always.
     </p>
 
@@ -559,7 +559,7 @@ export default function Home() {
 
     {/* Subline */}
     <p className="text-gray-600 text-sm sm:text-base max-w-xl mx-auto mb-12">
-      CloudBox is designed so you can start, use, or leave
+      SafeVault is designed so you can start, use, or leave
       without friction, penalties, or hidden dependencies.
     </p>
 

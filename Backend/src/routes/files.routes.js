@@ -15,7 +15,8 @@ const upload = multer({
   storage: multer.diskStorage({
     destination: os.tmpdir(),
     filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`);
+      cb(null, `${Date.now()}-${path.basename(file.originalname)}`);
+
     },
   }),
   limits: {
@@ -85,7 +86,6 @@ router.get("/trash", listTrash);
 router.post("/trash/:id/restore", restoreFromTrash);
 router.delete("/trash/:id/permanent", deleteForever);
 router.delete("/trash", emptyTrash);
-router.get("/vault/status", getVaultStatus);
 
 
 

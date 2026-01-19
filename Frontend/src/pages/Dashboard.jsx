@@ -6,6 +6,27 @@ import ImagePreview from "../components/ImagePreview";
 import { API_BASE } from "../utils/api";
 import { motion, AnimatePresence } from "framer-motion";
 
+
+
+function formatSize(bytes) {
+  if (!bytes) return "0 KB";
+
+  const KB = 1024;
+  const MB = KB * 1024;
+  const GB = MB * 1024;
+
+  if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
+  if (bytes >= MB) return (bytes / MB).toFixed(1) + " MB";
+  return (bytes / KB).toFixed(0) + " KB";
+}
+
+
+
+
+
+
+
+
 export default function Dashboard() {
   const { user } = useAuth();
 
@@ -33,11 +54,18 @@ export default function Dashboard() {
   const totalBytes = user?.storageLimit || 0;
   const usedBytes = files.reduce((s, f) => s + f.size, 0);
 
-  const totalGB = totalBytes / (1024 ** 3);
-  const usedGB = usedBytes / (1024 ** 3);
+ const totalGB = totalBytes / 1_000_000_000;
+const usedGB = usedBytes / 1_000_000_000;
+
 
   const percent =
     totalBytes > 0 ? Math.min((usedBytes / totalBytes) * 100, 100) : 0;
+
+    const isLowStorage = percent >= 80;
+
+
+
+
 
   const recentFiles = files.slice(0, 5);
   const previewFiles = files.filter(
@@ -129,12 +157,20 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-gray-900">
               Storage usage
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              <span className="font-medium text-gray-900">
-                {usedGB.toFixed(2)} GB
-              </span>{" "}
-              of {totalGB.toFixed(0)} GB used
-            </p>
+            <p
+  className={`text-xs mt-1 ${
+    isLowStorage ? "text-red-600" : "text-gray-500"
+  }`}
+>
+  <span className="font-medium text-gray-900">
+    {usedGB.toFixed(2)} GB
+  </span>{" "}
+  of {totalGB.toFixed(0)} GB used •{" "}
+  <span className="font-medium">
+    {Math.round(percent)}% used
+  </span>
+</p>
+
           </div>
 
           <button
@@ -150,9 +186,29 @@ export default function Dashboard() {
             initial={{ width: 0 }}
             animate={{ width: `${percent}%` }}
             transition={{ duration: 0.6 }}
-            className="h-full bg-blue-600 rounded-full"
+            className={`h-full rounded-full ${
+  isLowStorage ? "bg-red-500" : "bg-blue-600"
+}`}
           />
         </div>
+
+        <AnimatePresence>
+  {isLowStorage && (
+    <motion.p
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 4 }}
+      className="mt-2 text-xs text-red-600"
+    >
+      Low storage • Consider freeing up space
+    </motion.p>
+  )}
+</AnimatePresence>
+
+
+
+
+
 
         {/* Quick Links */}
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -207,8 +263,9 @@ export default function Dashboard() {
                 {file.name}
               </span>
               <span className="text-gray-500 text-xs">
-                {(file.size / (1024 * 1024)).toFixed(1)} MB
-              </span>
+  {formatSize(file.size)}
+</span>
+
             </div>
           ))}
         </div>

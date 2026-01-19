@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
-import Sidebar from "../components/Sidebar";
+
 import Breadcrumb from "../components/Breadcrumb";
 import FileRow from "../components/FileRow";
 import FileGridItem from "../components/FileGridItem";
@@ -18,7 +18,7 @@ import { vaultFile } from "../utils/api";
 
 
 
-export default function Files() {
+export default function Files({ initialMode = "files" }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const folderFromURL = searchParams.get("folder");
@@ -58,7 +58,8 @@ const [uploadError, setUploadError] = useState("");
 
   const [files, setFiles] = useState([]);
 
-  const [mode, setMode] = useState("files"); // files | trash
+  const [mode, setMode] = useState(initialMode);
+
 
   const [preview, setPreview] = useState(null);
   const [slideDir, setSlideDir] = useState("forward"); // animation

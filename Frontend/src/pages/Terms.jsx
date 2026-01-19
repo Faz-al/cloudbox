@@ -8,16 +8,16 @@ export default function Terms() {
       </p>
 
       <p>
-        Welcome to CloudBox. CloudBox (“CloudBox”, “we”, “us”, or “our”) provides a
+        Welcome to SafeVault. SafeVault (“SafeVault”, “we”, “us”, or “our”) provides a
         cloud-based platform that allows users to store, organize, and share
-        digital files in a secure environment. By accessing or using CloudBox,
+        digital files in a secure environment. By accessing or using SafeVault,
         you agree to these Terms of Service.
       </p>
 
-      <h2 className="font-semibold text-xl mt-10 mb-3">1. Using CloudBox</h2>
+      <h2 className="font-semibold text-xl mt-10 mb-3">1. Using SafeVault</h2>
 
       <p>
-        CloudBox is made available to help you store and manage your files in a
+        SafeVault is made available to help you store and manage your files in a
         reliable and secure way. You may use the service only for lawful purposes
         and in accordance with these Terms. You are responsible for maintaining
         the confidentiality of your account and for all activity that occurs
@@ -28,11 +28,11 @@ export default function Terms() {
 
       <p>
         You remain the owner of the files and information you choose to store on
-        CloudBox. The platform is designed to function as a digital storage and
+        SafeVault. The platform is designed to function as a digital storage and
         delivery system, allowing you to access, protect, and share your content
         across devices and through links you create. In order for these features
         to work properly — including private storage, vault protection, recovery,
-        backups, public sharing, and performance optimization — CloudBox
+        backups, public sharing, and performance optimization — SafeVault
         automatically handles and transfers data within its infrastructure
         using secure, industry-standard processes. This technical handling is
         solely for the purpose of operating, maintaining, protecting, and
@@ -42,7 +42,7 @@ export default function Terms() {
       <h2 className="font-semibold text-xl mt-10 mb-3">3. Acceptable Use</h2>
 
       <p>
-        CloudBox is intended for legitimate personal and business use. You agree
+        SafeVault is intended for legitimate personal and business use. You agree
         not to use the platform to store or distribute content that is unlawful,
         harmful, or violates the rights of others. This includes, but is not
         limited to:
@@ -61,7 +61,7 @@ export default function Terms() {
 
       <p>
         When you choose to share a file using a public link, anyone with that link
-        may be able to view or download the content. CloudBox does not control how
+        may be able to view or download the content. SafeVault does not control how
         shared content is used once it is made public. Public file pages may
         include advertisements or third-party content.
       </p>
@@ -69,7 +69,7 @@ export default function Terms() {
       <h2 className="font-semibold text-xl mt-10 mb-3">5. Payments and Advertising</h2>
 
       <p>
-        CloudBox may offer optional paid features such as ad-free access or
+        SafeVault may offer optional paid features such as ad-free access or
         enhanced performance. Payments are handled by third-party processors.
         Public pages may display advertisements to support the service.
       </p>
@@ -77,7 +77,7 @@ export default function Terms() {
       <h2 className="font-semibold text-xl mt-10 mb-3">6. Enforcement and Account Actions</h2>
 
       <p>
-        To maintain a safe and lawful platform, CloudBox may limit, suspend, or
+        To maintain a safe and lawful platform, SafeVault may limit, suspend, or
         terminate accounts that violate these Terms, receive repeated copyright
         complaints, or are associated with abuse, fraud, or unlawful activity.
         We may also remove or restrict access to content when necessary to
@@ -87,7 +87,7 @@ export default function Terms() {
       <h2 className="font-semibold text-xl mt-10 mb-3">7. Service Availability</h2>
 
       <p>
-        CloudBox works to keep your files accessible and the service running
+        SafeVault works to keep your files accessible and the service running
         smoothly, but we cannot guarantee uninterrupted availability. You are
         responsible for maintaining your own backups of important data.
       </p>
@@ -95,8 +95,8 @@ export default function Terms() {
       <h2 className="font-semibold text-xl mt-10 mb-3">8. Limitation of Liability</h2>
 
       <p>
-        CloudBox is provided on an “as-is” and “as-available” basis. To the maximum
-        extent permitted by law, CloudBox is not responsible for any indirect,
+        SafeVault is provided on an “as-is” and “as-available” basis. To the maximum
+        extent permitted by law, SafeVault is not responsible for any indirect,
         incidental, or consequential damages, including loss of data, business,
         or profits resulting from the use of the service.
       </p>
@@ -104,7 +104,7 @@ export default function Terms() {
       <h2 className="font-semibold text-xl mt-10 mb-3">9. Updates to These Terms</h2>
 
       <p>
-        These Terms may be updated from time to time. Continued use of CloudBox
+        These Terms may be updated from time to time. Continued use of SafeVault
         after changes are made means you accept the updated Terms.
       </p>
 
@@ -113,7 +113,7 @@ export default function Terms() {
       <p>
         For questions about these Terms, contact:
         <br />
-        <strong>support@cloudbox.app</strong>
+        <strong>support@SafeVault.in</strong>
       </p>
     </div>
   );

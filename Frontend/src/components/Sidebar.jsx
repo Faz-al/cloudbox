@@ -12,7 +12,8 @@ export default function Sidebar({
 
 const isAll = pathname === "/files" && !search;
 const isVault = pathname === "/vault";
-const isTrash = pathname === "/files" && search === "?type=trash";
+const isTrash = pathname === "/trash";
+
 const isImage = pathname === "/files" && search === "?type=image";
 const isVideo = pathname === "/files" && search === "?type=video";
 const isDocument = pathname === "/files" && search === "?type=document";
@@ -57,7 +58,7 @@ const isDocument = pathname === "/files" && search === "?type=document";
     <span>Vault</span>
   </NavLink>
 
-  <NavLink to="/files?type=trash" className={`${baseItem} ${isTrash ? active : inactive}`}>
+  <NavLink to="/trash" className={`${baseItem} ${isTrash ? active : inactive}`}>
 
     <TrashIcon />
     <span>Trash</span>

@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="flex flex-col items-center gap-6 text-center">
 
           <div>
-            <p className="font-semibold text-gray-900">CloudBox</p>
+            <p className="font-semibold text-gray-900">SafeVault</p>
             <p className="text-sm text-gray-600">
               Simple, secure cloud storage
             </p>
@@ -36,7 +36,7 @@ export default function Footer() {
 
 
           <p className="text-xs text-gray-500">
-            © 2026 CloudBox
+            © 2026 SafeVault
           </p>
 
         </div>

@@ -8,14 +8,14 @@ export default function Privacy() {
       </p>
 
       <p>
-        CloudBox (“CloudBox”, “we”, “us”, or “our”) provides a secure cloud-based
+        SafeVault (“SafeVault”, “we”, “us”, or “our”) provides a secure cloud-based
         platform for storing, managing, and sharing digital content. Your trust
         is important to us, and this Privacy Policy explains how information is
-        handled when you use CloudBox and its related services.
+        handled when you use SafeVault and its related services.
       </p>
 
       <p className="mt-4">
-        By accessing or using CloudBox, you acknowledge and agree to the
+        By accessing or using SafeVault, you acknowledge and agree to the
         collection, processing, and use of information as described in this
         policy.
       </p>
@@ -23,7 +23,7 @@ export default function Privacy() {
       <h2 className="font-semibold text-xl mt-10 mb-3">1. Information We Handle</h2>
 
       <p>
-        CloudBox processes certain information in order to provide a reliable,
+        SafeVault processes certain information in order to provide a reliable,
         secure, and functional service. This includes information you provide
         directly and information generated through the normal operation of the
         platform.
@@ -31,7 +31,7 @@ export default function Privacy() {
 
       <h3 className="font-semibold mt-4">A. Account & Access Information</h3>
       <p>
-        When you create or use an account, CloudBox maintains basic identifiers
+        When you create or use an account, SafeVault maintains basic identifiers
         such as your email address, authentication credentials (stored in
         encrypted form), IP addresses, device information, and session data.
         These are used to authenticate users, protect accounts, and keep the
@@ -40,7 +40,7 @@ export default function Privacy() {
 
       <h3 className="font-semibold mt-4">B. Stored Content & File Data</h3>
       <p>
-        CloudBox is built to securely organize, protect, and deliver the content
+        SafeVault is built to securely organize, protect, and deliver the content
         you choose to store or share. To enable features such as private storage,
         vault protection, recovery, public links, and access across devices, the
         platform maintains technical and operational data associated with stored
@@ -48,12 +48,12 @@ export default function Privacy() {
         references, and other system-level information required to reliably host
         and deliver your content. All such data is handled using security-focused
         infrastructure and is used only for providing, protecting, and operating
-        the CloudBox service.
+        the SafeVault service.
       </p>
 
       <h3 className="font-semibold mt-4">C. Usage & Technical Data</h3>
       <p>
-        CloudBox automatically collects technical information related to how the
+        SafeVault automatically collects technical information related to how the
         service is accessed and used. This includes connection data, timestamps,
         page interactions, public link activity, and performance metrics. This
         information helps us keep the service stable, secure, and efficient.
@@ -62,7 +62,7 @@ export default function Privacy() {
       <h2 className="font-semibold text-xl mt-10 mb-3">2. How Information Is Used</h2>
 
       <p>
-        Information processed by CloudBox is used solely for operating and
+        Information processed by SafeVault is used solely for operating and
         improving the service, including:
       </p>
 
@@ -81,9 +81,9 @@ export default function Privacy() {
       <h2 className="font-semibold text-xl mt-10 mb-3">3. Security & Vault Protection</h2>
 
       <p>
-        CloudBox uses modern security practices to protect user data and stored
+        SafeVault uses modern security practices to protect user data and stored
         content. Features such as Vault allow users to apply additional
-        protection using PIN-based access. While CloudBox works to safeguard all
+        protection using PIN-based access. While SafeVault works to safeguard all
         data, users are responsible for keeping their credentials confidential.
       </p>
 
@@ -99,7 +99,7 @@ export default function Privacy() {
       <h2 className="font-semibold text-xl mt-10 mb-3">5. Legal & Safety Purposes</h2>
 
       <p>
-        CloudBox may process, review, retain, or disclose information when
+        SafeVault may process, review, retain, or disclose information when
         reasonably necessary to comply with laws, respond to legal requests,
         enforce platform policies, prevent harmful activity, or protect the
         safety and rights of users and the public.
@@ -116,7 +116,7 @@ export default function Privacy() {
       <h2 className="font-semibold text-xl mt-10 mb-3">7. Third-Party Services</h2>
 
       <p>
-        CloudBox works with trusted partners such as hosting providers, payment
+        SafeVault works with trusted partners such as hosting providers, payment
         processors, analytics services, and advertising networks. These parties
         operate under their own privacy practices.
       </p>
@@ -125,14 +125,14 @@ export default function Privacy() {
 
       <p>
         You may manage, download, or delete your files and close your account at
-        any time using the CloudBox interface.
+        any time using the SafeVault interface.
       </p>
 
       <h2 className="font-semibold text-xl mt-10 mb-3">9. Policy Updates</h2>
 
       <p>
         We may update this Privacy Policy from time to time. Continued use of
-        CloudBox after updates means you accept the revised policy.
+        SafeVault after updates means you accept the revised policy.
       </p>
 
       <h2 className="font-semibold text-xl mt-10 mb-3">10. Contact</h2>
@@ -140,7 +140,7 @@ export default function Privacy() {
       <p>
         For questions about this Privacy Policy, contact:
         <br />
-        <strong>support@cloudbox.app</strong>
+        <strong>support@SafeVault.in</strong>
       </p>
     </div>
   );

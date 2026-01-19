@@ -14,7 +14,7 @@ export default function AccountSettings() {
 
 
  useEffect(() => {
-  document.title = "Account Settings · CloudBox";
+  document.title = "Account Settings · SafeVault";
 
   getMe()
     .then((user) => {
@@ -176,7 +176,7 @@ export default function AccountSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-800">
-                  CloudBox Free Plan
+                  SafeVault Free Plan
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   Upgrade to unlock more storage and features
@@ -198,7 +198,7 @@ export default function AccountSettings() {
               Danger zone
             </h2>
             <p className="text-sm text-gray-500 mb-4">
-              Permanently delete your CloudBox account and all stored files.
+              Permanently delete your SafeVault account and all stored files.
             </p>
 
             <button

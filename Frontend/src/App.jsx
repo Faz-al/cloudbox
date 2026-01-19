@@ -3,6 +3,7 @@ import { useState } from "react";
 import ViewSharedFile from "./pages/ViewSharedFile";
 import DMCA from "./pages/DMCA";
 import ResetPassword from "./pages/ResetPassword";
+import Trash from "./pages/Trash";
 
 
 import Privacy from "./pages/Privacy";
@@ -74,6 +75,8 @@ export default function App() {
       <Route path="/dashboard" element={<Dashboard openPreview={openPreview} />} />
       <Route path="/files" element={<Files openPreview={openPreview} />} />
       <Route path="/vault" element={<Vault />} />
+      <Route path="/trash" element={<Trash />} />
+
       <Route path="/upgrade" element={<Upgrade />} />
       <Route path="/account" element={<AccountSettings />} />
       <Route path="/settings/security" element={<SettingsSecurity />} />

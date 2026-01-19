@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 export default function Upgrade() {
   useEffect(() => {
-    document.title = "Upgrade · CloudBox";
+    document.title = "Upgrade · SafeVault";
   }, []);
 
   return (
@@ -17,7 +17,7 @@ export default function Upgrade() {
     <p className="mt-3 text-gray-600 leading-relaxed">
       Plan upgrades are currently handled manually.
       <br />
-      Please contact support to upgrade your CloudBox account.
+      Please contact support to upgrade your SafeVault account.
     </p>
 
     <a
@@ -35,7 +35,7 @@ export default function Upgrade() {
         {/* HERO */}
         <div className="text-center mb-20">
           <h1 className="text-[40px] font-semibold tracking-tight text-gray-900">
-            Upgrade your CloudBox experience
+            Upgrade your SafeVault experience
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-500 leading-relaxed">
             Get more storage, advanced security, and professional-grade features
@@ -126,7 +126,7 @@ export default function Upgrade() {
         {/* WHY UPGRADE */}
         <div className="mb-24">
           <h2 className="text-3xl font-semibold text-gray-900 text-center">
-            Why upgrade to CloudBox?
+            Why upgrade to SafeVault?
           </h2>
         </div>
       </div>

@@ -41,7 +41,7 @@ export default function ForgotPassword() {
         {/* Brand */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-blue-600 tracking-tight">
-            CloudBox
+            SafeVault
           </h1>
           <p className="text-xs text-gray-400 mt-1">
             Secure cloud storage

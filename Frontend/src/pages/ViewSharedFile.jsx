@@ -1,9 +1,11 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+
 import { API_BASE } from "../utils/api";
 import { useEffect, useRef, useState } from "react";
 import AdSlot from "../components/AdSlot";
 import HouseAd from "../components/HouseAd";
-
+import SafeVaultLogo from "../assets/logo/safevault-logo.svg";
+import Footer from "../components/Footer"; 
 
 
 // 🔒 Propeller load guard (GLOBAL for this page)
@@ -261,18 +263,33 @@ if (error || !file) {
 
 
   return (
-    <div className="min-h-screen bg-slate-100 grid place-items-start p-6">
+    <div className="sticky top-0 z-40 border-b border-gray-200/70 bg-white/70 backdrop-blur-xl">
 
  <div className="bg-white w-full max-w-4xl rounded-xl shadow overflow-hidden mx-auto">
 
 
         
-       <div className="border-b px-6 py-4 flex justify-between items-center bg-slate-50">
+       <div className="h-16 px-4 sm:px-6 flex items-center justify-between  bg-slate-100">
 
-  <div className="flex items-center gap-2">
-    <span className="font-bold text-blue-600">☁ CloudBox</span>
-    <span className="text-xs text-gray-500">Secure file sharing</span>
-  </div>
+  <div className="flex items-center py-[6px]">
+  <a
+  href="/"
+  className="flex items-center hover:opacity-80 transition"
+>
+  <img
+    src={SafeVaultLogo}
+    alt="SafeVault"
+    className="w-[150px] h-auto mt-[15px] -ml-[20px]"
+    
+  />
+  <span className="text-xs -ml-[25px] text-gray-500">Secure file sharing</span>
+</a>
+  
+</div>
+
+
+
+
 
   <div className="flex items-center gap-4 text-sm">
   <a href="/" className="text-blue-600 hover:underline">
@@ -299,7 +316,7 @@ if (error || !file) {
  
 
             <div className="text-xs text-gray-500">
-  Shared via <span className="font-semibold">CloudBox</span> ·
+  Shared via <span className="font-semibold">SafeVault</span> ·
   <a href="/" className="text-blue-600 ml-1 hover:underline">
     Upload your own files
   </a>
@@ -438,8 +455,9 @@ if (error || !file) {
           </button>
         </div>
       </div>
+      <Footer />
       </div>
-
+               
 
       {showAd && (
   <AdModal
@@ -566,7 +584,7 @@ function AdModal({ onFinish, downloadAdsLeft, adReason }) {
 </div>
 
 <p className="text-xs text-gray-400">
-  Ads help keep CloudBox free and secure.
+  Ads help keep SafeVault free and secure.
 </p>
 
 
@@ -594,6 +612,9 @@ function AdModal({ onFinish, downloadAdsLeft, adReason }) {
           </button>
         )}
       </div>
+      
+     
     </div>
+    
   );
 }

@@ -30,7 +30,7 @@ export default function Navbar({ onMenu }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200/70 bg-white/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-gray-200/70 bg-gray-50/70 backdrop-blur-xl">
       <div className="h-16 px-4 sm:px-6 flex items-center justify-between">
 
         {/* LEFT */}
@@ -146,7 +146,7 @@ export default function Navbar({ onMenu }) {
                         </span>
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Secure CloudBox account
+                        Secure SafeVault account
                       </p>
                     </div>
 

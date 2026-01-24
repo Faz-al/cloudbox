@@ -41,26 +41,39 @@ app.set("etag", false);
 
 
 /* ===== CORS (COOKIE SAFE) ===== */
+/* ===== CORS (PRODUCTION SAFE) ===== */
 const allowedOrigins = [
-  "http://localhost:3000", // website frontend
-  "http://localhost:5173", // admin frontend
+  "http://localhost:3000",
+  "http://localhost:5173",
+
+  // PRODUCTION FRONTEND
+  "https://safevault.in",
+  "https://www.safevault.in",
+  "https://app.safevault.in",   // if you use app subdomain
+  "https://admin.safevault.in"  // if admin panel
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow server-to-server / curl / postman
-      if (!origin) return callback(null, true);
+      if (!origin) return callback(null, true); // allow server-to-server
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
+      console.log("❌ Blocked by CORS:", origin);
       return callback(new Error("CORS not allowed"));
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// IMPORTANT: handle preflight
+app.options("*", cors());
+
 
 
 /* ===== MIDDLEWARE ===== */

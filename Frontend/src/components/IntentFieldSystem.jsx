@@ -1,8 +1,33 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function IntentFieldSystem() {
   const canvasRef = useRef(null);
+  const sectionRef = useRef(null);
+  const [active, setActive] = useState(false);
+  const [stageText, setStageText] = useState("Encrypting");
 
+  /* Pipeline text loop */
+  useEffect(() => {
+    const stages = ["Encrypting", "Isolating", "Storing"];
+    let i = 0;
+    const interval = setInterval(() => {
+      i = (i + 1) % stages.length;
+      setStageText(stages[i]);
+    }, 2400);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* Scroll reveal */
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setActive(entry.isIntersecting),
+      { threshold: 0.25 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  /* Canvas Engine – Enterprise Calm Pipeline */
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -22,144 +47,117 @@ export default function IntentFieldSystem() {
     resize();
     window.addEventListener("resize", resize);
 
-    /* ========================= SYSTEM CONSTANTS ========================= */
-
     const STAGES = {
-      INGEST: 0.18,
-      INTENT: 0.32,
-      ENCRYPT: 0.5,
-      REPLICATE: 0.68,
-      STORE: 0.85,
+      UPLOAD: 0.12,
+      POLICY: 0.32,
+      ENCRYPT: 0.52,
+      ISOLATE: 0.72,
+      STORE: 0.88,
     };
 
-    /* ========================= DATA PACKETS ========================= */
+    const LANES = [-60, -30, 0, 30, 60];
+    const PACKET_COUNT = Math.min(120, Math.floor(w / 7));
 
-    const packets = Array.from({ length: 220 }).map(() => ({
+    const packets = Array.from({ length: PACKET_COUNT }).map(() => ({
       p: Math.random(),
-      v: Math.random() * 0.6 + 0.4,
-      seed: Math.random() * 100,
-      integrity: Math.random(),
-      size: Math.random() * 1.6 + 1.2,
+      v: Math.random() * 0.25 + 0.15,
+      lane: LANES[Math.floor(Math.random() * LANES.length)],
+      size: Math.random() * 1.2 + 0.9,
+      alpha: Math.random() * 0.4 + 0.25,
     }));
 
-    /* ========================= CORE PATH ========================= */
-
-    function pathY(x, phase) {
-      const pressure =
-        x > w * STAGES.ENCRYPT - 40 && x < w * STAGES.ENCRYPT + 40
-          ? 32
-          : 18;
-
-      return (
-        cy +
-        Math.sin(x * 0.0038 + phase) * pressure +
-        Math.sin(x * 0.014) * 6
-      );
+    function pathY(x, phase, lane) {
+      const curve = Math.sin((x / w) * Math.PI) * 14;
+      return cy + lane + curve + Math.sin(phase + lane) * 0.4;
     }
 
-    /* ========================= DRAW HELPERS ========================= */
-
-    function glowPath(offset, width, alpha) {
+    function drawRail(offsetY, alpha, blur = 0) {
+      ctx.save();
       ctx.strokeStyle = `rgba(37,99,235,${alpha})`;
-      ctx.lineWidth = width;
-      ctx.lineCap = "round";
+      ctx.lineWidth = 1.2;
+      ctx.shadowBlur = blur;
+      ctx.shadowColor = "rgba(37,99,235,0.25)";
       ctx.beginPath();
-      for (let x = 0; x <= w; x += 14) {
-        const y = pathY(x, t + offset);
+      for (let x = 0; x <= w; x += 12) {
+        const y = pathY(x, t, offsetY);
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
+      ctx.restore();
     }
 
-    function stageRing(x, label, energy) {
-      const y = pathY(x, t);
-
+    function stageNode(x, label) {
+      const y = cy;
       ctx.save();
-      ctx.globalAlpha = energy;
+      ctx.globalAlpha = 0.85;
 
-      // containment field
       ctx.beginPath();
-      ctx.arc(x, y, 36, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(37,99,235,0.08)";
+      ctx.arc(x, y, 42, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(37,99,235,0.02)";
       ctx.fill();
 
-      // ring
-      ctx.strokeStyle = "rgba(37,99,235,0.55)";
+      ctx.strokeStyle = "rgba(37,99,235,0.6)";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(x, y, 18 + Math.sin(t * 2) * 1.5, 0, Math.PI * 2);
+      ctx.arc(x, y, 18 + Math.sin(t * 2.4) * 0.8, 0, Math.PI * 2);
       ctx.stroke();
 
-      // core
       ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(37,99,235,0.9)";
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(37,99,235,1)";
       ctx.fill();
 
-      // label
-      ctx.fillStyle = "#334155";
-      ctx.font = "11px system-ui";
+      ctx.fillStyle = "rgba(37,99,235,0.8)";
+      ctx.font = "11px ui-monospace";
       ctx.textAlign = "center";
-      ctx.fillText(label, x, y - 34);
+      ctx.fillText(label, x, y - 52);
 
       ctx.restore();
     }
 
-    /* ========================= MAIN DRAW ========================= */
+    function drawBackground() {
+      ctx.fillStyle = "rgba(37,99,235,0.01)";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.beginPath();
+      ctx.ellipse(w / 2, cy, 520, 240, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(37,99,235,0.008)";
+      ctx.fill();
+    }
 
     function draw() {
+      if (!active) return requestAnimationFrame(draw);
+
       ctx.clearRect(0, 0, w, h);
-      t += 0.0024;
+      t += 0.0009;
 
-      /* ---------- DEEP FIELD ---------- */
+      drawBackground();
 
-      ctx.fillStyle = "rgba(37,99,235,0.025)";
-      ctx.beginPath();
-      ctx.ellipse(w / 2, cy, 380, 190, 0, 0, Math.PI * 2);
-      ctx.fill();
+      LANES.forEach((lane, i) =>
+        drawRail(lane, i === 2 ? 0.22 : 0.07, i === 2 ? 6 : 0)
+      );
 
-      /* ---------- ENERGY CHANNELS ---------- */
-
-      glowPath(0, 46, 0.06);   // pressure field
-      glowPath(1, 28, 0.12);   // transport layer
-      glowPath(2, 2, 0.55);    // signal core
-
-      /* ---------- STAGES ---------- */
-
-      stageRing(w * STAGES.INGEST, "Upload", (Math.sin(t * 1.1) + 1) / 2);
-      stageRing(w * STAGES.ENCRYPT, "Encrypt", (Math.sin(t * 1.6 + 2) + 1) / 2);
-      stageRing(w * STAGES.STORE, "Cold Store", (Math.sin(t * 1.4 + 4) + 1) / 2);
-
-      /* ---------- DATA FLOW ---------- */
+      stageNode(w * STAGES.UPLOAD, "UPLOAD");
+      stageNode(w * STAGES.POLICY, "POLICY");
+      stageNode(w * STAGES.ENCRYPT, "ENCRYPT");
+      stageNode(w * STAGES.ISOLATE, "ISOLATE");
+      stageNode(w * STAGES.STORE, "STORE");
 
       for (const p of packets) {
-        p.p += 0.0009 * p.v;
+        p.p += 0.0006 * p.v;
         if (p.p > 1) p.p = 0;
 
         const x = p.p * w;
-        let y = pathY(x, t);
+        const y = pathY(x, t, p.lane);
 
-        // intent inspection slowdown
-        if (x > w * STAGES.INTENT - 30 && x < w * STAGES.INTENT + 30) {
-          y += Math.sin(p.seed + t * 12) * 10;
-        }
-
-        // encryption turbulence
-        if (x > w * STAGES.ENCRYPT - 40 && x < w * STAGES.ENCRYPT + 40) {
-          y += Math.sin(p.seed + t * 18) * 18;
-        }
-
-        // replication fan-out
-        if (x > w * STAGES.REPLICATE) {
-          y += Math.sin(p.seed) * 6;
-        }
+        const encryptZone =
+          x > w * STAGES.ENCRYPT - 45 && x < w * STAGES.ENCRYPT + 45;
 
         ctx.beginPath();
         ctx.arc(x, y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle =
-          x > w * STAGES.ENCRYPT - 40 && x < w * STAGES.ENCRYPT + 40
-            ? "rgba(37,99,235,0.95)"
-            : "rgba(37,99,235,0.6)";
+        ctx.fillStyle = encryptZone
+          ? "rgba(37,99,235,1)"
+          : `rgba(37,99,235,${p.alpha})`;
         ctx.fill();
       }
 
@@ -168,11 +166,91 @@ export default function IntentFieldSystem() {
 
     draw();
     return () => window.removeEventListener("resize", resize);
-  }, []);
+  }, [active]);
 
   return (
-    <section className="relative h-[48vh] sm:h-[58vh] overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white">
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+    <section
+      ref={sectionRef}
+      className="relative py-20 sm:py-28 bg-white border-t border-slate-200 overflow-hidden"
+    >
+      {/* Subtle Enterprise Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
+
+      {/* Header */}
+      <div className="text-center max-w-4xl mx-auto px-6">
+        <p className="text-xs font-semibold tracking-widest text-blue-600 uppercase">
+          SafeVault Zero-Trust Architecture
+        </p>
+
+        <h2 className="mt-3 text-3xl sm:text-4xl font-semibold text-gray-900">
+          Security Pipeline with Policy-Driven Encryption
+        </h2>
+
+        <p className="mt-4 text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
+          Files are verified, encrypted, isolated, and stored without human
+          access. Every action is enforced by policy.
+        </p>
+
+        <p className="mt-4 text-sm font-medium text-blue-600">
+          {stageText}…
+        </p>
+      </div>
+
+      {/* Timeline */}
+      <div className="mt-12 px-6">
+        <div className="max-w-6xl mx-auto relative">
+          <div className="h-[1px] bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
+          <div className="flex justify-between mt-4 text-xs font-medium text-gray-700">
+            <Stage label="Upload" />
+            <Stage label="Policy Engine" />
+            <Stage label="Encryption Core" />
+            <Stage label="Isolation Gate" />
+            <Stage label="Cold Storage" />
+          </div>
+        </div>
+      </div>
+
+      {/* Pipeline Canvas */}
+      <div className="relative h-[46vh] sm:h-[58vh] mt-10">
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0)_40%,rgba(0,0,0,0.05)_100%)] pointer-events-none" />
+      </div>
+
+      {/* Enterprise Metrics Panel */}
+      <div className="hidden sm:grid mt-10 max-w-5xl mx-auto grid-cols-4 gap-4 px-6">
+  <GlassMetric title="Files / sec" value="1,582" />
+  <GlassMetric title="Encryption" value="AES-256 Active" />
+  <GlassMetric title="Isolation Zones" value="7 Active" />
+  <GlassMetric title="Policy Decisions" value="Realtime" />
+</div>
+
+
+      {/* Mobile Metrics */}
+      <div className="sm:hidden mt-10 px-6 grid grid-cols-3 gap-3">
+        <GlassMetric title="Files/sec" value="1,582" />
+        <GlassMetric title="Encrypted" value="100%" />
+        <GlassMetric title="Zones" value="7" />
+      </div>
     </section>
+  );
+}
+
+/* Timeline Stage */
+function Stage({ label }) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="w-2 h-2 bg-blue-600 rounded-full" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+/* Glass Metric */
+function GlassMetric({ title, value }) {
+  return (
+    <div className="bg-white/70 backdrop-blur border border-gray-200 rounded-xl px-3 py-2 shadow-sm text-xs">
+      <p className="text-gray-500 uppercase tracking-wide">{title}</p>
+      <p className="font-semibold text-gray-900 text-sm">{value}</p>
+    </div>
   );
 }

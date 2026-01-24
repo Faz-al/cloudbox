@@ -42,19 +42,21 @@ app.set("etag", false);
 
 /* ===== CORS (COOKIE SAFE) ===== */
 const allowedOrigins = [
-  "http://localhost:3000",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
-
+  "http://localhost:3000", // website frontend
+  "http://localhost:5173", // admin frontend
+];
 
 app.use(
   cors({
     origin: function (origin, callback) {
+      // allow server-to-server / curl / postman
       if (!origin) return callback(null, true);
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      callback(new Error("CORS not allowed"));
+
+      return callback(new Error("CORS not allowed"));
     },
     credentials: true,
   })

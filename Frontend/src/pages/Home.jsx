@@ -524,9 +524,6 @@ export default function Home() {
 
 
     {/* Headline */}
-    <h2 className="text-2xl sm:text-3xl font-semibold  text-gray-900 mb-6 leading-snug">
-      How It works.
-    </h2>
 
 
     

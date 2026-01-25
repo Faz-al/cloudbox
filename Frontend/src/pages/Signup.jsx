@@ -135,6 +135,11 @@ const verifyOTP = async () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
 
+    // ✅ Meta Pixel signup event (frontend only)
+    if (window.fbq) {
+      window.fbq("track", "CompleteRegistration");
+    }
+
     setStep("done");
   } catch (err) {
     setOtpError(err.message || "OTP verification failed");
@@ -142,6 +147,7 @@ const verifyOTP = async () => {
     setOtpLoading(false);
   }
 };
+
 
 
 
@@ -174,7 +180,7 @@ const verifyOTP = async () => {
                 {/* Header */}
                 <div className="text-center mb-6">
                   <h1 className="text-2xl font-semibold text-gray-900">
-                    Create your CloudBox account
+                    Create your SafeVault account
                   </h1>
                   <p className="text-sm text-gray-500 mt-1">
                     Secure cloud storage built for peace of mind
@@ -270,7 +276,7 @@ const verifyOTP = async () => {
                   </button>
 
                     <p className="text-[11px] text-center text-gray-500 mt-3 leading-relaxed">
-  By creating an account, you agree to CloudBox’s{" "}
+  By creating an account, you agree to SafeVault’s{" "}
   <Link to="/terms" className="text-blue-600 hover:underline">
     Terms of Service
   </Link>{" "}

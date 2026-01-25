@@ -6,10 +6,9 @@ import AdSlot from "../components/AdSlot";
 import HouseAd from "../components/HouseAd";
 import SafeVaultLogo from "../assets/logo/safevault-logo.svg";
 import Footer from "../components/Footer"; 
+import AdFrame from "../components/AdFrame";
 
 
-// 🔒 Propeller load guard (GLOBAL for this page)
-let propellerLoaded = false;
 
 
 
@@ -63,11 +62,6 @@ export default function ViewSharedFile() {
 
 
 
-useEffect(() => {
-  propellerLoaded = false;
-  window.__lastPopAt = 0;
-}, [token]);
-
 
 
 
@@ -94,13 +88,20 @@ useEffect(() => {
   const v = videoRef.current;
   if (!v) return;
 
-  if (showAd) {
-    v.pause();
-    v.controls = false;
-  } else {
-    v.controls = true;
-  }
+ if (showAd) {
+  v.pause();
+  v.controls = false;
+}
+
+ else {
+  v.controls = true;
+  v.play().catch(() => {});
+
+}
+
 }, [showAd]);
+
+
 
   const isVideo = file?.type?.startsWith("video/");
   const isImage = file?.type?.startsWith("image/");
@@ -111,26 +112,7 @@ useEffect(() => {
   /* ============ AD ENGINE ============ */
 
 
-const firePopAd = () => {
-  if (process.env.REACT_APP_ENABLE_POPADS !== "true") return;
 
-  // 1️⃣ Load Propeller script ONLY ONCE
-  if (!propellerLoaded) {
-    const s = document.createElement("script");
-    s.dataset.zone = "10472131";
-    s.src = "https://al5sm.com/tag.min.js";
-    s.async = true;
-
-    document.body.appendChild(s);
-    propellerLoaded = true;
-
-    return; // ⛔ first interaction only loads script
-  }
-
-  // 2️⃣ Throttle pops (60s)
-  if (window.__lastPopAt && Date.now() - window.__lastPopAt < 60000) return;
-  window.__lastPopAt = Date.now();
-};
 
 
 
@@ -138,7 +120,7 @@ const firePopAd = () => {
 
 
 const requireAd = (gate) => {
-  firePopAd();              // 👈 ADD THIS
+ 
 
   const v = videoRef.current;
   if (!v) return;
@@ -155,8 +137,8 @@ const requireAd = (gate) => {
 
   const finishAd = () => {
     // Download flow
-    if (downloadAdsLeft > 0) {
-        firePopAd(); // ✅ ONE pop per modal ad
+if (adReason === "download" && downloadAdsLeft > 0) {
+      
 
   setDownloadAdsLeft(prev => {
     const next = prev - 1;
@@ -182,12 +164,15 @@ const requireAd = (gate) => {
 
 
     // Timeline unlock
-    setUnlockedUntil(currentGate);
+setUnlockedUntil(currentGate + 0.01);
+
+
+
+
 setShowAd(false);
 
 if (videoRef.current) {
   videoRef.current.controls = true;   // restore controls
-  videoRef.current.play();
 }
 
   };
@@ -200,8 +185,10 @@ if (videoRef.current) {
     const t = videoRef.current.currentTime;
 
     // If crossed into locked zone
-    if (t > unlockedUntil) {
-      const gate = GATES.find(g => t <= g);
+if (t > unlockedUntil) {
+
+     const gate = GATES.find(g => t <= g) || GATES[GATES.length - 1];
+
       if (gate) requireAd(gate);
     }
   };
@@ -212,9 +199,10 @@ if (videoRef.current) {
 
   const t = v.currentTime;
 
-  if (t > unlockedUntil) {
+if (t > unlockedUntil) {
+
     v.currentTime = unlockedUntil; // snap back
-    const gate = GATES.find(g => t <= g);
+const gate = GATES.find(g => t <= g) || GATES[GATES.length - 1];
     if (gate) requireAd(gate);
   }
 };
@@ -227,13 +215,11 @@ if (videoRef.current) {
 
 
 const startDownload = () => {         
+  setDownloadAdsLeft(2);   // set FIRST
   setAdReason("download");
   setShowAd(true);
-
-  setTimeout(() => {
-    setDownloadAdsLeft(2);
-  }, 5000);
 };
+
 
 
 
@@ -260,7 +246,7 @@ if (error || !file) {
     </div>
   );
 }
-
+  
 
   return (
     <div className="sticky top-0 z-40 border-b border-gray-200/70 bg-white/70 backdrop-blur-xl">
@@ -334,7 +320,7 @@ if (error || !file) {
 
 
              {/* SAFE ADSENSE PLACEMENT */}
-{process.env.REACT_APP_ENABLE_ADS === "true" && (
+{process.env.REACT_APP_ENABLE_ADS === "true" && false && (
   <div className="my-4 flex justify-center">
     <AdSlot
       slot="YOUR_ADSENSE_SLOT_ID"
@@ -369,10 +355,13 @@ if (error || !file) {
       onPlay={() => {
         const v = videoRef.current;
         if (!v) return;
-        if (v.currentTime > unlockedUntil) {
+        if (unlockedUntil > 0 && v.currentTime > unlockedUntil) {
+
           v.pause();
-          const gate = GATES.find(g => v.currentTime <= g);
-          if (gate) requireAd(gate);
+         const gate = GATES.find(g => v.currentTime <= g) || GATES[GATES.length - 1];
+if (gate) requireAd(gate);
+
+
         }
       }}
     />
@@ -397,7 +386,7 @@ if (error || !file) {
 
 
 {/* SAFE ADSENSE SLOT #2 – post-preview */}
-{process.env.REACT_APP_ENABLE_ADS === "true" && (
+{false && process.env.REACT_APP_ENABLE_ADS === "true" && (
   <div className="my-6 flex justify-center">
     <AdSlot
       slot="YOUR_SECOND_ADSENSE_SLOT_ID"
@@ -476,50 +465,66 @@ if (error || !file) {
 /* ============ AD MODAL ============ */
 
 function AdModal({ onFinish, downloadAdsLeft, adReason }) {
+  const [adInjected, setAdInjected] = useState(false);
+
+
+  
+
+
+
 
   const [timeLeft, setTimeLeft] = useState(10);
+  useEffect(() => {
+  setTimeLeft(10);
+}, [adReason, downloadAdsLeft]);
 
 
     const [adLoaded, setAdLoaded] = useState(false);
-  const adContainerRef = useRef(null);
+ 
+      useEffect(() => {
+  return () => {
+    setAdInjected(false);
+    setAdLoaded(false);
+  };
+}, []);
+
+
+      
+ 
+    const adContainerRef = useRef(null);
 
 
 
 
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      setTimeLeft(s => {
-        if (s <= 1) {
-          clearInterval(t);
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, []);
+useEffect(() => {
+  let t;
+  if (timeLeft > 0) {
+    t = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+  }
+  return () => clearTimeout(t);
+}, [timeLeft]);
 
 
 
-  useEffect(() => {
+
+useEffect(() => {
   if (!adContainerRef.current) return;
 
   const observer = new MutationObserver(() => {
     const iframe = adContainerRef.current.querySelector("iframe");
     if (iframe) {
+      setAdInjected(true);
       setAdLoaded(true);
       observer.disconnect();
     }
   });
 
-  observer.observe(adContainerRef.current, {
-    childList: true,
-    subtree: true,
-  });
+  observer.observe(adContainerRef.current, { childList: true, subtree: true });
 
   return () => observer.disconnect();
-}, []);
+}, [adReason, downloadAdsLeft]);
+
+
 
 
 
@@ -531,46 +536,56 @@ function AdModal({ onFinish, downloadAdsLeft, adReason }) {
 
   return (
     <div
-  className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
+  className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999]"
   onClick={(e) => e.stopPropagation()}
 >
 
-     <div
-  className="bg-white p-6 rounded-2xl w-96 text-center space-y-5 shadow-xl"
+
+   <div
+className="bg-white/95 backdrop-blur-xl rounded-3xl w-[420px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-white/30 overflow-hidden"
   onClick={(e) => e.stopPropagation()}
 >
 
-      <h2 className="font-semibold text-lg">
-  {adReason === "download" && downloadAdsLeft === 0
-    ? "Preparing download…"
-    : adReason === "download"
-    ? `Watch ad (${downloadAdsLeft} left)`
-    : "Watch ad to continue watching"}
-</h2>
+
+<div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
+  <h2 className="font-semibold text-sm text-gray-700">
+    {adReason === "download" && downloadAdsLeft === 0
+      ? "Preparing download…"
+      : adReason === "download"
+      ? `Watch ad (${downloadAdsLeft} left)`
+      : "Watch ad to continue watching"}
+  </h2>
+  <span className="text-xs text-gray-400">Ad</span>
+</div>
 
 
 
-       <div
+
+   <div
   ref={adContainerRef}
-  className="relative border rounded-lg overflow-hidden h-44 bg-gray-50"
+  className="relative bg-black h-[220px] rounded-xl overflow-hidden mx-3 mt-3 shadow-inner"
 >
+
+
 
 
       {/* POP / NON-GOOGLE AD PLACEHOLDER */}
-<div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500 pointer-events-none">
 
-  Advertisement
-</div>
 
 
 
 
   {/* Skeleton */}
   {!adLoaded && (
-  <div className="absolute inset-0 flex items-center justify-center animate-pulse text-gray-300 pointer-events-none">
+  <div className="absolute inset-0 flex items-center justify-center animate-pulse text-gray-300">
     Loading ad…
   </div>
 )}
+
+{process.env.REACT_APP_ENABLE_POPADS === "true" && !adInjected && (
+  <AdFrame />
+)}
+
 
 
   {process.env.REACT_APP_ENABLE_POPADS !== "true" && (
@@ -583,9 +598,16 @@ function AdModal({ onFinish, downloadAdsLeft, adReason }) {
 
 </div>
 
-<p className="text-xs text-gray-400">
+
+<div className="px-4 text-xs text-gray-500 flex items-center gap-2">
+  <span className="font-semibold">SafeVault</span>
+  <span>• Sponsored</span>
+</div>
+
+<p className="text-xs text-gray-400 px-4 pb-2">
   Ads help keep SafeVault free and secure.
 </p>
+
 
 
 
@@ -595,7 +617,8 @@ function AdModal({ onFinish, downloadAdsLeft, adReason }) {
       Please wait {timeLeft}s to continue
     </p>
 
-    <div className="h-1 bg-gray-200 rounded overflow-hidden">
+    <div className="h-1 bg-gray-200 rounded-full overflow-hidden mx-4">
+
       <div
         className="h-full bg-blue-600 transition-all"
         style={{ width: `${((10 - timeLeft) / 10) * 100}%` }}
@@ -605,9 +628,10 @@ function AdModal({ onFinish, downloadAdsLeft, adReason }) {
 ) : (
 
           <button
-            onClick={onFinish}
-            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-          >
+  onClick={onFinish}
+  className="bg-black text-white px-4 py-2 rounded-xl w-full hover:bg-gray-900 transition"
+>
+
             Continue
           </button>
         )}

@@ -39,6 +39,12 @@ const adminRoutes = require("./routes/admin.routes");
 const app = express();
 app.set("etag", false);
 
+const path = require("path");
+
+// SERVE PUBLIC ROOT FILES (sw.js, robots.txt, etc)
+app.use(express.static("public"));
+
+
 
 /* ===== CORS (COOKIE SAFE) ===== */
 /* ===== CORS (PRODUCTION SAFE) ===== */

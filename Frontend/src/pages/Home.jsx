@@ -172,7 +172,9 @@ export default function Home() {
 </section>
 
 
+       
         {/* ================= PRODUCT DEMO ================= */}
+    
      {/* ================= PRODUCT DEMO ================= */}
 <section className="relative pb-24 sm:pb-32 -mt-8 sm:-mt-12 overflow-hidden demo-section demo-enter">
   {/* Ambient background */}

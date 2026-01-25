@@ -33,6 +33,19 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import ImagePreview from "./components/ImagePreview";
 
+import {
+  SecureCloudStorage,
+  PrivateCloudStorage,
+  EncryptedCloudStorage,
+  FreeCloudStorage,
+  CloudStorageIndia
+} from "./pages/SeoPages";
+
+
+
+
+
+
 export default function App() {
   // 🔥 GLOBAL PREVIEW STATE
   const [previewFile, setPreviewFile] = useState(null);
@@ -56,6 +69,14 @@ export default function App() {
   {/* Everything else uses AppLayout */}
   <Route element={<AppLayout />}>
 
+  {/* SEO Public Pages */}
+<Route path="/secure-cloud-storage" element={<SecureCloudStorage />} />
+<Route path="/private-cloud-storage" element={<PrivateCloudStorage />} />
+<Route path="/encrypted-cloud-storage" element={<EncryptedCloudStorage />} />
+<Route path="/free-cloud-storage" element={<FreeCloudStorage />} />
+<Route path="/cloud-storage-india" element={<CloudStorageIndia />} />
+
+
     {/* Public pages */}
     <Route element={<PublicRoute />}>
       <Route path="/" element={<Home />} />
@@ -67,7 +88,11 @@ export default function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
-    
+
+  
+
+
+
     </Route>
 
     {/* App pages */}

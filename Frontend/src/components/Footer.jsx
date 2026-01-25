@@ -33,6 +33,24 @@ export default function Footer() {
     Contact
   </Link>
 </nav>
+          
+
+          {/* SEO Content (for Google, subtle for users) */}
+<div className="max-w-4xl mx-auto text-[11px] text-gray-400 leading-relaxed mt-6 text-center">
+
+  <h2 className="text-xs font-medium text-gray-500">
+    Secure Cloud Storage for Photos, Videos and Files
+  </h2>
+
+  <p className="mt-1">
+    SafeVault is a privacy-first cloud storage platform for storing photos, videos,
+    documents and personal files securely. SafeVault encrypts your data and keeps it private by default.
+    Get 5GB free secure cloud storage today.
+  </p>
+
+</div>
+
+
 
 
           <p className="text-xs text-gray-500">

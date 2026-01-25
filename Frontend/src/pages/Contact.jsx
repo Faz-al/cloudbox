@@ -1,7 +1,7 @@
 export default function Contact() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-20 text-slate-800">
-      <h1 className="text-4xl font-bold mb-6">Contact CloudBox</h1>
+      <h1 className="text-4xl font-bold mb-6">Contact SafeVault</h1>
 
       <p className="text-lg text-slate-600 max-w-2xl">
         We’re here to help. Whether you have a question about your account,
@@ -15,7 +15,7 @@ export default function Contact() {
           <p className="text-slate-600 mb-4">
             For help with your account, files, payments, or technical issues.
           </p>
-          <p className="font-medium text-slate-900">support@cloudbox.app</p>
+          <p className="font-medium text-slate-900">support@SafeVault.app</p>
         </div>
 
         <div className="border rounded-xl p-6 bg-white shadow-sm">
@@ -23,13 +23,13 @@ export default function Contact() {
           <p className="text-slate-600 mb-4">
             For reporting copyright infringement or submitting legal notices.
           </p>
-          <p className="font-medium text-slate-900">dmca@cloudbox.app</p>
+          <p className="font-medium text-slate-900">dmca@SafeVault.app</p>
         </div>
       </div>
 
       <div className="mt-16 text-sm text-slate-500 max-w-2xl">
         <p>
-          CloudBox is a cloud storage and file sharing platform designed to
+          SafeVault is a cloud storage and file sharing platform designed to
           provide secure, reliable, and user-controlled access to your digital
           content. We aim to respond to all legitimate inquiries as quickly as
           possible.

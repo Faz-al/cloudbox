@@ -24,3 +24,11 @@ body {
 .animate-slide-right {
   animation: slideRight 0.25s ease-out;
 }
+
+
+.seo-hidden {
+  position: absolute;
+  left: -9999px;
+  height: 0;
+  overflow: hidden;
+}

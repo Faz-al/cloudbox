@@ -6,6 +6,8 @@ import AdSlot from "../components/AdSlot";
 import HouseAd from "../components/HouseAd";
 import SafeVaultLogo from "../assets/logo/safevault-logo.svg";
 import Footer from "../components/Footer"; 
+import { loadMonetagBanner } from "../ad-engine/MonetagBannerLoader";
+
 import AdFrame from "../components/AdFrame";
 
 
@@ -29,12 +31,26 @@ export default function ViewSharedFile() {
   const [currentGate, setCurrentGate] = useState(0);
   const [downloadAdsLeft, setDownloadAdsLeft] = useState(0);
 
+  const videoPopunderShown = useRef(false);
+
+
+
+
   const infoUrl = `${API_BASE}/files/public/info/${token}`;
   const previewUrl = `${API_BASE}/files/public/preview/${token}`;
   const downloadUrl = `${API_BASE}/files/public/view/${token}`;
 
   // 15m, 45m, 90m, 3h
   const GATES = [900, 2700, 5400, 10800];
+
+
+  useEffect(() => {
+  loadMonetagBanner();
+}, []);
+
+
+
+
 
   useEffect(() => {
   fetch(infoUrl)
@@ -627,13 +643,52 @@ className="bg-white/95 backdrop-blur-xl rounded-3xl w-[420px] shadow-[0_20px_60p
   </>
 ) : (
 
-          <button
-  onClick={onFinish}
-  className="bg-black text-white px-4 py-2 rounded-xl w-full hover:bg-gray-900 transition"
->
+  
 
-            Continue
-          </button>
+
+     <button
+  disabled={window.__SV_CLICK_LOCK__}
+  onClick={() => {
+    if (window.__SV_CLICK_LOCK__) return;
+    window.__SV_CLICK_LOCK__ = true;
+    setTimeout(() => (window.__SV_CLICK_LOCK__ = false), 2000);
+
+
+    // ===== VIDEO POPUNDER (ONLY ONCE) =====
+    // ===== VIDEO POPUNDER (ONLY ONCE) =====
+if (adReason === "video" && !window.__SV_VIDEO_POPUNDER__) {
+  window.__SV_VIDEO_POPUNDER__ = true;
+
+  const a = document.createElement("a");
+  a.href = "https://otieu.com/4/10514188";
+  a.target = "_blank";
+  a.rel = "noreferrer";
+  a.click();
+}
+
+// ===== DOWNLOAD POPUNDER (TWICE VIA downloadAdsLeft) =====
+if (adReason === "download") {
+  const a = document.createElement("a");
+  a.href = "https://otieu.com/4/10514188";
+  a.target = "_blank";
+  a.rel = "noreferrer";
+  a.click();
+}
+
+
+
+    // ===== DOWNLOAD POPUNDER (TWICE) =====
+   
+
+    onFinish();
+  }}
+
+
+  className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+>
+  Continue
+</button>
+
         )}
       </div>
       

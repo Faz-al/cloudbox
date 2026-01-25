@@ -6,6 +6,21 @@
   const ENABLED = process.env.REACT_APP_ENABLE_AD_ENGINE === "true";
   if (!ENABLED) return;
 
+  // HARD LOCK: Ads ONLY on /view/
+  if (!window.location.pathname.startsWith("/view/")) return;
+
+  // Load In-Page Push
+  (function(s){
+    s.dataset.zone='10514225';
+    s.src='https://nap5k.com/tag.min.js';
+  })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+
+  // Load Vignette
+  (function(s){
+    s.dataset.zone='10514195';
+    s.src='https://gizokraijaw.net/vignette.min.js';
+  })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+
   const THROTTLE = parseInt(process.env.REACT_APP_AD_THROTTLE_SECONDS || "900");
 
   function canShowAd() {

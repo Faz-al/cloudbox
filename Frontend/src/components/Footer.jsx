@@ -16,39 +16,28 @@ export default function Footer() {
             </p>
           </div>
 
-          <nav className="flex gap-6 text-sm text-gray-600">
-  <Link to="/privacy" className="hover:text-gray-900 transition">
-    Privacy
+          <nav className="flex gap-6 text-sm text-gray-600 flex-wrap justify-center">
+  <Link to="/cloud-storage" className="hover:text-gray-900 font-medium">
+    Cloud Storage
   </Link>
 
-  <Link to="/terms" className="hover:text-gray-900 transition">
-    Terms
+  <Link to="/blog" className="hover:text-gray-900">
+    Blog
   </Link>
 
-  <Link to="/dmca" className="hover:text-gray-900 transition">
-    DMCA
+  <Link to="/faq" className="hover:text-gray-900">
+    FAQ
   </Link>
 
-  <Link to="/contact" className="hover:text-gray-900 transition">
-    Contact
-  </Link>
+  <Link to="/privacy" className="hover:text-gray-900">Privacy</Link>
+  <Link to="/terms" className="hover:text-gray-900">Terms</Link>
+  <Link to="/dmca" className="hover:text-gray-900">DMCA</Link>
+  <Link to="/contact" className="hover:text-gray-900">Contact</Link>
 </nav>
+
+
           
 
-          {/* SEO Content (for Google, subtle for users) */}
-<div className="max-w-4xl mx-auto text-[11px] text-gray-400 leading-relaxed mt-6 text-center">
-
-  <h2 className="text-xs font-medium text-gray-500">
-    Secure Cloud Storage for Photos, Videos and Files
-  </h2>
-
-  <p className="mt-1">
-    SafeVault is a privacy-first cloud storage platform for storing photos, videos,
-    documents and personal files securely. SafeVault encrypts your data and keeps it private by default.
-    Get 5GB free secure cloud storage today.
-  </p>
-
-</div>
 
 
 

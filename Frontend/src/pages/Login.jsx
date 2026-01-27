@@ -187,14 +187,14 @@ const resendOTP = async () => {
             <div className="flex justify-center gap-4 text-xs text-gray-500 mb-6">
               <span>🔒 Encrypted</span>
               <span>🛡️ Private</span>
-              <span>☁️ CloudBox</span>
+              <span>☁️ SafeVault</span>
             </div>
 
 
 
             {suspended && (
   <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
-    Your account has been suspended by CloudBox. Please contact support.
+    Your account has been suspended by SafeVault. Please contact support.
   </div>
 )}
 

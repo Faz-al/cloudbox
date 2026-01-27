@@ -5,6 +5,7 @@ import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ScrollToTop from "../components/ScrollToTop";
 
 
 export default function AppLayout() {
@@ -29,6 +30,7 @@ const isAuthPage =
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      <ScrollToTop />
 
       {/* Top App Bar */}
 {/* Top App Bar */}

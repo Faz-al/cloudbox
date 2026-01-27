@@ -14,6 +14,7 @@ import Contact from "./pages/Contact";
 
 import AccountSettings from "./pages/AccountSettings";
 import AppLayout from "./layouts/AppLayout";
+import SeoArticleLayout from "./layouts/SeoArticleLayout";
 
 import SettingsSecurity from "./pages/SettingsSecurity";
 import Vault from "./pages/Vault";
@@ -32,6 +33,21 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import ImagePreview from "./components/ImagePreview";
+
+import CloudStorageMain from "./pages/SeoMainCloudStorage";
+import BlogIndex from "./pages/BlogIndex";
+import SecureCloudStorageGuide from "./pages/blog/SecureCloudStorageGuide";
+import EncryptedCloudStorageExplained from "./pages/blog/EncryptedCloudStorageExplained";
+import BestCloudStorageIndia from "./pages/blog/BestCloudStorageIndia";
+import GoogleDriveAlternatives from "./pages/blog/GoogleDriveAlternatives";
+import CloudStoragePrivacyGuide from "./pages/blog/CloudStoragePrivacyGuide";
+import ZeroKnowledgeEncryptionGuide from "./pages/blog/ZeroKnowledgeEncryptionGuide";
+
+import Faq from "./pages/Faq";
+
+
+
+
 
 import {
   SecureCloudStorage,
@@ -66,15 +82,43 @@ export default function App() {
   {/* Public file viewer */}
   <Route path="/view/:token" element={<ViewSharedFile />} />
 
+
+      {/* SEO + Marketing Public Content Layout */}
+<Route element={<SeoArticleLayout />}>
+
+  {/* Marketing Mega Page */}
+  <Route path="/cloud-storage" element={<CloudStorageMain />} />
+
+  {/* SEO Article Pages */}
+  <Route path="/secure-cloud-storage" element={<SecureCloudStorage />} />
+  <Route path="/private-cloud-storage" element={<PrivateCloudStorage />} />
+  <Route path="/encrypted-cloud-storage" element={<EncryptedCloudStorage />} />
+  <Route path="/free-cloud-storage" element={<FreeCloudStorage />} />
+  <Route path="/cloud-storage-india" element={<CloudStorageIndia />} />
+
+  {/* Blog */}
+  <Route path="/blog" element={<BlogIndex />} />
+  <Route path="/blog/secure-cloud-storage-guide" element={<SecureCloudStorageGuide />} />
+  <Route path="/blog/encrypted-cloud-storage-explained" element={<EncryptedCloudStorageExplained />} />
+  <Route path="/blog/best-cloud-storage-india" element={<BestCloudStorageIndia />} />
+    <Route path="/blog/google-drive-alternatives" element={<GoogleDriveAlternatives />} />
+<Route path="/blog/cloud-storage-privacy-guide" element={<CloudStoragePrivacyGuide />} />
+<Route path="/blog/how-zero-knowledge-encryption-works" element={<ZeroKnowledgeEncryptionGuide />} />
+
+
+
+
+
+  {/* FAQ */}
+  <Route path="/faq" element={<Faq />} />
+
+</Route>
+
   {/* Everything else uses AppLayout */}
   <Route element={<AppLayout />}>
 
   {/* SEO Public Pages */}
-<Route path="/secure-cloud-storage" element={<SecureCloudStorage />} />
-<Route path="/private-cloud-storage" element={<PrivateCloudStorage />} />
-<Route path="/encrypted-cloud-storage" element={<EncryptedCloudStorage />} />
-<Route path="/free-cloud-storage" element={<FreeCloudStorage />} />
-<Route path="/cloud-storage-india" element={<CloudStorageIndia />} />
+
 
 
     {/* Public pages */}

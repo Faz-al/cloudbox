@@ -1,0 +1,10 @@
+{
+  "appId": "in.safevault.app",
+  "appName": "SafeVault",
+  "webDir": "build",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://safevault.in",
+    "cleartext": true
+  }
+}

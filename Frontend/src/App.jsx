@@ -13,6 +13,7 @@ import Contact from "./pages/Contact";
 
 
 import AccountSettings from "./pages/AccountSettings";
+
 import AppLayout from "./layouts/AppLayout";
 import SeoArticleLayout from "./layouts/SeoArticleLayout";
 

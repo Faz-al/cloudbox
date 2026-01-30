@@ -53,7 +53,7 @@ export default function ResetPassword() {
         {/* Brand */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-blue-600 tracking-tight">
-            CloudBox
+            SafeVault
           </h1>
         </div>
 

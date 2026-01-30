@@ -18,7 +18,7 @@ export default function Login() {
 
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-slate-900">
-            CloudBox Admin
+            SafeVault Admin
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Sign in to manage the platform
@@ -32,7 +32,7 @@ export default function Login() {
             </label>
             <input
               type="email"
-              placeholder="admin@cloudbox.com"
+              placeholder="admin@SafeVault.com"
               onChange={e => setEmail(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
             />
@@ -59,7 +59,7 @@ export default function Login() {
         </div>
 
         <div className="mt-6 text-center text-xs text-slate-400">
-          Internal CloudBox administration
+          Internal SafeVault administration
         </div>
 
       </div>

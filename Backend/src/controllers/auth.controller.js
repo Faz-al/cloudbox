@@ -528,6 +528,11 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
+    if (!req.body.password || req.body.password.length < 8) {
+  return res.status(400).json({ message: "Invalid password" });
+}
+
+
     user.password = await bcrypt.hash(req.body.password, 10);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;

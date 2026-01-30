@@ -5,7 +5,6 @@ import { getFiles } from "../utils/api";
 import ImagePreview from "../components/ImagePreview";
 import { API_BASE } from "../utils/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { NativeBiometric } from "capacitor-native-biometric";
 
 
 
@@ -50,18 +49,6 @@ export default function Dashboard() {
       console.error("Failed to load files");
     }
   };
-
-  async function testBiometric() {
-  try {
-    await NativeBiometric.verifyIdentity({
-      reason: "Unlock SafeVault"
-    });
-    alert("SUCCESS - Phone password accepted");
-  } catch (e) {
-    alert("FAILED or cancelled");
-  }
-}
-
 
   /* ===== Storage ===== */
   const totalBytes = user?.storageLimit || 0;
@@ -156,13 +143,6 @@ const usedGB = usedBytes / 1_000_000_000;
         <p className="text-sm text-gray-500 mt-1">
           Secure cloud storage for your files
         </p>
-        <button 
-  onClick={testBiometric}
-  className="mt-3 bg-black text-white px-3 py-1 rounded text-xs"
->
-Test Phone Password
-</button>
-
       </div>
 
       {/* Storage Card */}

@@ -19,7 +19,7 @@ exports.submitDmca = async (req, res) => {
       return res.status(400).json({ message: "Legal confirmations required" });
     }
 
-    // Extract token from CloudBox link
+    // Extract token from SafeVault link
     let token = null;
     if (infringingUrl.includes("/view/")) {
       token = infringingUrl.split("/view/")[1];

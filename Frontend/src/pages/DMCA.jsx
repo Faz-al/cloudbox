@@ -67,7 +67,7 @@ const submit = async (e) => {
             appropriate action.
           </p>
           <Link to="/" className="text-blue-600 text-sm hover:underline">
-            Return to CloudBox
+            Return to SafeVault
           </Link>
         </div>
       </div>
@@ -138,7 +138,7 @@ const submit = async (e) => {
           />
 
           <input
-            placeholder="Infringing CloudBox URL"
+            placeholder="Infringing SafeVault URL"
             className={field}
             value={form.infringingUrl}
             onChange={e => setForm({ ...form, infringingUrl: e.target.value })}

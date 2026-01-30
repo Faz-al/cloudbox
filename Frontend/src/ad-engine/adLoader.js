@@ -7,9 +7,8 @@ export function loadMonetagIframe(container) {
   script.type = "text/javascript";
   script.async = true;
 
-  // 👉 REPLACE THIS WITH YOUR REAL BANNER ZONE ID
-  script.src = "https://al5sm.com/banner.js?zoneid=10514178";
+  // REPLACE with BANNER ZONE ID (NOT vignette, NOT onclick)
+  script.src = "https://al5sm.com/banner.js?zoneid=YOUR_BANNER_ZONE_ID";
 
   container.appendChild(script);
 }
-

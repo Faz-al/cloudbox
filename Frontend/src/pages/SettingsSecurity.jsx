@@ -10,8 +10,8 @@ import { API_BASE, toggleEmail2FA, getMe } from "../utils/api";
 
 
 export default function SettingsSecurity() {
-  const [sessions, setSessions] = useState([]);
-    const [email2FAEnabled, setEmail2FAEnabled] = useState(false);
+const [sessions, setSessions] = useState([]);
+const [email2FAEnabled, setEmail2FAEnabled] = useState(false);
 const [toggling2FA, setToggling2FA] = useState(false);
 const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
 const [currentPassword, setCurrentPassword] = useState("");

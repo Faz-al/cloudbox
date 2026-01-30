@@ -2,4 +2,12 @@ package in.safevault.app;
 
 import com.getcapacitor.BridgeActivity;
 
-public class MainActivity extends BridgeActivity {}
+import android.webkit.WebView;
+
+public class MainActivity extends BridgeActivity {
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    WebView.setWebContentsDebuggingEnabled(true);
+  }
+}

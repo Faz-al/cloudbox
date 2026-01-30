@@ -22,7 +22,7 @@ export default function ActiveSessionsCard({ sessions, onLogoutDevice }) {
           Active sessions
         </h2>
         <p className="text-sm text-gray-500 mt-1 max-w-lg">
-          These are the devices currently signed in to your CloudBox account.
+          These are the devices currently signed in to your SafeVault account.
         </p>
       </div>
 

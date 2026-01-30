@@ -16,6 +16,7 @@ const securitySessionSchema = new mongoose.Schema({
   isCurrent: { type: Boolean, default: false },
   isSuspicious: { type: Boolean, default: false }
 });
+
 securitySessionSchema.index({ userId: 1, fingerprint: 1 });
 
 module.exports = mongoose.model("SecuritySession", securitySessionSchema);

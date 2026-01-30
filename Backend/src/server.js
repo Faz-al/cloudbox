@@ -47,16 +47,22 @@ app.use(express.static("public"));
 
 
 /* ===== CORS (COOKIE SAFE) ===== */
-/* ===== CORS (PRODUCTION SAFE) ===== */
 const allowedOrigins = [
+  // Local dev
   "http://localhost:3000",
   "http://localhost:5173",
+  "http://localhost",
+  "https://localhost",
 
-  // PRODUCTION FRONTEND
+  // Capacitor Android (IMPORTANT)
+  "capacitor://localhost",
+  "ionic://localhost",
+
+  // Production
   "https://safevault.in",
   "https://www.safevault.in",
-  "https://app.safevault.in",   // if you use app subdomain
-  "https://admin.safevault.in"  // if admin panel
+  "https://app.safevault.in",
+  "https://admin.safevault.in"
 ];
 
 app.use(

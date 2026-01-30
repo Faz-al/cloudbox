@@ -197,7 +197,6 @@ const toggleShare = async (req, res) => {
 
 /* Generate share link */
 
-console.log("FRONTEND_URL =", process.env.FRONTEND_URL);
 
 
 const shareFile = async (req, res) => {

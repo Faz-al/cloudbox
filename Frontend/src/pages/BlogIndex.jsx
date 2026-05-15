@@ -1,7 +1,30 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+import { sanityClient } from "../sanity/client";
+import { allPostsQuery } from "../sanity/queries";
+import { urlFor } from "../sanity/image";
 
 export default function BlogIndex() {
+
+  const [sanityBlogs, setSanityBlogs] = useState([]);
+  useEffect(() => {
+  async function loadBlogs() {
+    try {
+      const data = await sanityClient.fetch(
+        allPostsQuery
+      );
+
+      setSanityBlogs(data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  loadBlogs();
+}, []);
+
   return (
     <>
       <Helmet>
@@ -89,6 +112,43 @@ export default function BlogIndex() {
       <p className="text-gray-600 mt-3 text-sm">Deep technical explanation of zero-knowledge encryption.</p>
       <p className="mt-4 text-sm font-medium text-pink-600">Read article →</p>
     </Link>
+
+    {/* SANITY BLOGS */}
+
+{sanityBlogs.map((blog) => (
+  <Link
+    key={blog.slug}
+    to={`/blog/${blog.slug}`}
+    className="group bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition"
+  >
+    <p className="text-xs text-blue-600 font-medium mb-3">
+      ARTICLE
+    </p>
+
+    {blog.mainImage && (
+  <img
+    src={urlFor(blog.mainImage).width(800).url()}
+    alt={
+  blog.mainImage?.alt ||
+  blog.title
+}
+    className="w-full h-52 object-cover rounded-xl mb-5"
+  />
+)}
+
+    <h2 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition">
+      {blog.title}
+    </h2>
+
+    <p className="text-gray-600 mt-3 text-sm">
+      {blog.excerpt}
+    </p>
+
+    <p className="mt-4 text-sm font-medium text-blue-600">
+      Read article →
+    </p>
+  </Link>
+))}
 
   </div>
 </section>

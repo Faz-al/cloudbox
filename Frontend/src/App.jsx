@@ -20,7 +20,7 @@ import SeoArticleLayout from "./layouts/SeoArticleLayout";
 import SettingsSecurity from "./pages/SettingsSecurity";
 import Vault from "./pages/Vault";
 
-import PublicLayout from "./layouts/PublicLayout";
+
 
 
 import Home from "./pages/Home";
@@ -43,8 +43,14 @@ import BestCloudStorageIndia from "./pages/blog/BestCloudStorageIndia";
 import GoogleDriveAlternatives from "./pages/blog/GoogleDriveAlternatives";
 import CloudStoragePrivacyGuide from "./pages/blog/CloudStoragePrivacyGuide";
 import ZeroKnowledgeEncryptionGuide from "./pages/blog/ZeroKnowledgeEncryptionGuide";
-
+import SanityBlogPage from './pages/blog/SanityBlogPage'
 import Faq from "./pages/Faq";
+import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { App as CapacitorApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
+
+import { useRef } from "react";
 
 
 
@@ -67,6 +73,15 @@ export default function App() {
   // 🔥 GLOBAL PREVIEW STATE
   const [previewFile, setPreviewFile] = useState(null);
   const [previewFiles, setPreviewFiles] = useState([]);
+    const navigate = useNavigate();
+  const location = useLocation();
+  const [lastBackPress, setLastBackPress] = useState(0);
+
+  const previewFileRef = useRef(null);
+const locationRef = useRef(location);
+const lastBackPressRef = useRef(0);
+
+
 
   const openPreview = (file, files) => {
     if (!file || file.isFolder) return;
@@ -75,6 +90,60 @@ export default function App() {
   };
 
   const closePreview = () => setPreviewFile(null);
+
+useEffect(() => {
+  if (Capacitor.getPlatform() !== "android") return;
+
+  let backHandler = null;
+
+  const setupListener = async () => {
+    backHandler = await CapacitorApp.addListener("backButton", () => {
+
+      if (previewFileRef.current) {
+        closePreview();
+        return;
+      }
+
+      if (
+        locationRef.current.pathname !== "/" &&
+        locationRef.current.pathname !== "/dashboard"
+      ) {
+        navigate(-1);
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastBackPressRef.current < 2000) {
+        CapacitorApp.exitApp();
+      } else {
+        lastBackPressRef.current = now;
+      }
+    });
+  };
+
+  setupListener();
+
+  return () => {
+    if (backHandler && typeof backHandler.remove === "function") {
+      backHandler.remove();
+    }
+  };
+}, [navigate]);
+
+
+useEffect(() => {
+  previewFileRef.current = previewFile;
+  locationRef.current = location;
+  lastBackPressRef.current = lastBackPress;
+}, [previewFile, location, lastBackPress]);
+
+
+
+
+
+
+    
+
 
   return (
     <>
@@ -106,6 +175,10 @@ export default function App() {
 <Route path="/blog/cloud-storage-privacy-guide" element={<CloudStoragePrivacyGuide />} />
 <Route path="/blog/how-zero-knowledge-encryption-works" element={<ZeroKnowledgeEncryptionGuide />} />
 
+<Route
+  path="/blog/:slug"
+  element={<SanityBlogPage />}
+/>
 
 
 

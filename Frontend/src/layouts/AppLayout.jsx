@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ScrollToTop from "../components/ScrollToTop";
+import { Capacitor } from "@capacitor/core";
 
 
 export default function AppLayout() {
@@ -19,8 +20,6 @@ useEffect(() => {
 }, [location.pathname, location.search]);
 
 
-
-
 const isAuthPage =
   location.pathname === "/login" ||
   location.pathname === "/signup" ||
@@ -28,8 +27,37 @@ const isAuthPage =
 
 
 
+useEffect(() => {
+  if (Capacitor.getPlatform() !== "android") return;
+
+  const updateStatusBar = async () => {
+    try {
+      const { StatusBar } = await import("@capacitor/status-bar");
+
+      if (isAuthPage) {
+        await StatusBar.setStyle({ style: "DARK" });
+        await StatusBar.setBackgroundColor({ color: "#0f172a" });
+      } else {
+        await StatusBar.setStyle({ style: "LIGHT" });
+        await StatusBar.setBackgroundColor({ color: "#ffffff" });
+      }
+    } catch (err) {
+      console.warn("StatusBar not available");
+    }
+  };
+
+  updateStatusBar();
+}, [isAuthPage]);
+
+
+
+
+
+
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 pt-safe">
+
       <ScrollToTop />
 
       {/* Top App Bar */}

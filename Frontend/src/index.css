@@ -142,3 +142,7 @@ section div {
 section div:hover {
   transform: translateY(-2px);
 }
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}

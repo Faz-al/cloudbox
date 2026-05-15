@@ -1,13 +1,20 @@
 package in.safevault.app;
 
+import android.os.Bundle; // ✅ ADD THIS LINE
+import android.view.WindowManager;
+
+
 import com.getcapacitor.BridgeActivity;
 
-import android.webkit.WebView;
-
 public class MainActivity extends BridgeActivity {
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    WebView.setWebContentsDebuggingEnabled(true);
-  }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().setFlags(
+    WindowManager.LayoutParams.FLAG_SECURE,
+    WindowManager.LayoutParams.FLAG_SECURE
+);
+
+    }
 }

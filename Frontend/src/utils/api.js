@@ -125,6 +125,8 @@ export const getFiles = (query = "") =>
 
 
 export const uploadFile = async (file, parent = null) => {
+  const token = getMobileAuthToken();
+
   const formData = new FormData();
   formData.append("file", file);
   if (parent) formData.append("parent", parent);
@@ -132,6 +134,9 @@ export const uploadFile = async (file, parent = null) => {
   const res = await fetch(`${API_BASE}/files/upload`, {
     method: "POST",
     credentials: "include",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: formData,
   });
 

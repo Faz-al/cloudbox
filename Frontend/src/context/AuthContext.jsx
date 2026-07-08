@@ -70,6 +70,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await apiLogin(email, password);
+    
+    alert(res?.token ? "Mobile token received" : "No mobile token received");
+   
     if (res?.token) {
   saveMobileAuthToken(res.token);
 }

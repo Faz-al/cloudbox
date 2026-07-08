@@ -15,7 +15,12 @@ const User = require("../models/User");
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    const cookieToken = req.cookies?.token;
+const bearerToken = req.headers.authorization?.startsWith("Bearer ")
+  ? req.headers.authorization.split(" ")[1]
+  : null;
+
+const token = cookieToken || bearerToken;
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized" });

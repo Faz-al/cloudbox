@@ -17,9 +17,9 @@ const cookieOptions = {
   httpOnly: true,
   secure: isProd,
   sameSite: isProd ? "none" : "lax",
+  path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
-
 
 
 
@@ -381,14 +381,15 @@ setTimeout(async () => {
 
 
     res.json({
-      message: "Login successful",
-      user: {
-        email: user.email,
-        storageLimit: user.storageLimit,
-        usedStorage: user.usedStorage,
-        plan: user.plan,
-      },
-    });
+  message: "Login successful",
+  token,
+  user: {
+    email: user.email,
+    storageLimit: user.storageLimit,
+    usedStorage: user.usedStorage,
+    plan: user.plan,
+  },
+});
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -556,7 +557,9 @@ const logout = (req, res) => {
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? "none" : "lax",
+    path: "/",
   });
+
   res.json({ message: "Logged out" });
 };
 
@@ -566,11 +569,12 @@ const logoutAll = async (req, res) => {
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? "none" : "lax",
-    });
+   res.clearCookie("token", {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  path: "/",
+});
 
     res.json({ message: "Logged out from all devices" });
   } catch {
@@ -617,7 +621,10 @@ const verifyLoginOTP = async (req, res) => {
 
     res.cookie("token", token, cookieOptions);
 
-    res.json({ message: "Login successful" });
+    res.json({
+  message: "Login successful",
+  token,
+});
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

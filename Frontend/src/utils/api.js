@@ -51,7 +51,7 @@ const apiFetch = async (url, options = {}) => {
  if (!res.ok) {
   const message = data?.message || "Request failed";
 
-  // 🔒 Vault locked → show toast, don't crash app
+  // 🔒 Vault locked → notify user AND let caller handle it
   if (message === "Vault locked") {
     window.dispatchEvent(
       new CustomEvent("toast", {
@@ -61,7 +61,6 @@ const apiFetch = async (url, options = {}) => {
         },
       })
     );
-    return null; // IMPORTANT: do not throw
   }
 
   const err = new Error(message);

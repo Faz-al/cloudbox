@@ -1,22 +1,21 @@
 {
-  "appId": "in.safevault.app",
+  "appId": "com.acidhouseonline.safevault",
   "appName": "SafeVault",
   "webDir": "build",
-  "bundledWebRuntime": false
-  ,
+  "bundledWebRuntime": false,
   "plugins": {
+    "CapacitorCookies": {
+      "enabled": true
+    },
     "SplashScreen": {
-      "launchShowDuration": 3000,
+      "launchShowDuration": 0,
       "launchAutoHide": true,
-      "backgroundColor": "#0f172a",
+      "backgroundColor": "#ffffff",
       "showSpinner": false
     },
     "StatusBar": {
-      "style": "DARK",
-      "backgroundColor": "#0f172a"
+      "style": "LIGHT",
+      "backgroundColor": "#ffffff"
     }
-    
   }
-  
-
 }

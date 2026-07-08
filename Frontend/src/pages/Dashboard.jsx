@@ -1,12 +1,11 @@
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { getFiles } from "../utils/api";
 import ImagePreview from "../components/ImagePreview";
 import { API_BASE } from "../utils/api";
 import { motion, AnimatePresence } from "framer-motion";
-
-
 
 function formatSize(bytes) {
   if (!bytes) return "0 KB";
@@ -20,15 +19,203 @@ function formatSize(bytes) {
   return (bytes / KB).toFixed(0) + " KB";
 }
 
+function FileTypeIcon({ file }) {
+  const type = file?.type || "";
+  const name = file?.name?.toLowerCase() || "";
 
+  let label = "FILE";
+  let tone = "bg-slate-50 text-slate-600 border-slate-200";
 
+  if (file?.isFolder || type === "folder") {
+    label = "FOLDER";
+    tone = "bg-amber-50 text-amber-700 border-amber-100";
+  } else if (type.startsWith("image")) {
+    label = "IMG";
+    tone = "bg-sky-50 text-sky-700 border-sky-100";
+  } else if (type.startsWith("video")) {
+    label = "VID";
+    tone = "bg-violet-50 text-violet-700 border-violet-100";
+  } else if (type.includes("pdf") || name.endsWith(".pdf")) {
+    label = "PDF";
+    tone = "bg-rose-50 text-rose-700 border-rose-100";
+  } else if (type.includes("zip") || name.endsWith(".zip")) {
+    label = "ZIP";
+    tone = "bg-orange-50 text-orange-700 border-orange-100";
+  } else if (
+    type.includes("document") ||
+    type.includes("word") ||
+    name.endsWith(".doc") ||
+    name.endsWith(".docx")
+  ) {
+    label = "DOC";
+    tone = "bg-emerald-50 text-emerald-700 border-emerald-100";
+  }
 
+  return (
+    <div
+      className={[
+        "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-[10px] font-black tracking-wide",
+        tone,
+      ].join(" ")}
+    >
+      {label}
+    </div>
+  );
+}
 
+function UploadIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M12 16V8m0 0l-3 3m3-3l3 3M4 16.5A4.5 4.5 0 018.5 12H9a6 6 0 1111 3.5"
+      />
+    </svg>
+  );
+}
 
+function ArrowIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M9 5l7 7-7 7"
+      />
+    </svg>
+  );
+}
 
+function FolderIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8.5a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
+      />
+    </svg>
+  );
+}
+
+function ImageIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M4 5h16v14H4V5z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M8 13l2.5-2.5L14 14l2-2 4 4M8 9h.01"
+      />
+    </svg>
+  );
+}
+
+function VideoIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M4 6h12a2 2 0 012 2v8a2 2 0 01-2 2H4V6z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M18 10l3-2v8l-3-2"
+      />
+    </svg>
+  );
+}
+
+function DocumentIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M7 3h7l5 5v13H7a2 2 0 01-2-2V5a2 2 0 012-2z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M14 3v6h5M9 13h6M9 17h6"
+      />
+    </svg>
+  );
+}
+
+function VaultIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M7 11V8a5 5 0 0110 0v3"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M6 11h12v9H6v-9z"
+      />
+    </svg>
+  );
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const isAndroidApp = Capacitor.getPlatform() === "android";
 
   const [files, setFiles] = useState([]);
   const [previewFile, setPreviewFile] = useState(null);
@@ -50,22 +237,16 @@ export default function Dashboard() {
     }
   };
 
-  /* ===== Storage ===== */
   const totalBytes = user?.storageLimit || 0;
   const usedBytes = files.reduce((s, f) => s + f.size, 0);
 
- const totalGB = totalBytes / 1_000_000_000;
-const usedGB = usedBytes / 1_000_000_000;
-
+  const totalGB = totalBytes / 1_000_000_000;
+  const usedGB = usedBytes / 1_000_000_000;
 
   const percent =
     totalBytes > 0 ? Math.min((usedBytes / totalBytes) * 100, 100) : 0;
 
-    const isLowStorage = percent >= 80;
-
-
-
-
+  const isLowStorage = percent >= 80;
 
   const recentFiles = files.slice(0, 5);
   const previewFiles = files.filter(
@@ -74,7 +255,18 @@ const usedGB = usedBytes / 1_000_000_000;
       (f.type?.startsWith("image") || f.type?.startsWith("video"))
   );
 
-  /* ===== Upload ===== */
+  const imageCount = files.filter((f) => f.type?.startsWith("image")).length;
+  const videoCount = files.filter((f) => f.type?.startsWith("video")).length;
+  const documentCount = files.filter(
+    (f) =>
+      f.type?.includes("document") ||
+      f.type?.includes("pdf") ||
+      f.type?.includes("word") ||
+      f.name?.toLowerCase().endsWith(".doc") ||
+      f.name?.toLowerCase().endsWith(".docx") ||
+      f.name?.toLowerCase().endsWith(".pdf")
+  ).length;
+
   const handleUpload = (file) => {
     if (!file) return;
 
@@ -133,143 +325,418 @@ const usedGB = usedBytes / 1_000_000_000;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 lg:px-10">
+    <div
+      className={[
+        "min-h-full",
+       isAndroidApp
+  ? "bg-gradient-to-b from-sky-50 via-white to-white px-4 pb-28 pt-3"
+  : "px-4 py-5 sm:px-6 lg:px-8 lg:py-7",
+      ].join(" ")}
+    >
+      {/* Website header only. Android starts directly with storage card. */}
+{!isAndroidApp && (
+  <div className="mb-7 flex flex-col gap-4 border-b border-slate-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <h1 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+        Home
+      </h1>
+      <p className="mt-1 text-sm text-slate-500">
+        Access and manage your files in SafeVault.
+      </p>
+    </div>
 
-      {/* Header */}
-      <div className="mb-7">
-        <h1 className="text-xl font-semibold text-gray-900">
-          Your Vault
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Secure cloud storage for your files
-        </p>
+    <div className="flex flex-col gap-3 sm:flex-row">
+      <Link
+        to="/files"
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+      >
+        View all files
+        <ArrowIcon />
+      </Link>
+
+      <button
+        type="button"
+        onClick={() => fileInputRef.current.click()}
+        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+      >
+        <UploadIcon />
+        Upload
+      </button>
+    </div>
+  </div>
+)}
+
+      {/* Top Cards */}
+      <div
+        className={[
+          "grid gap-4",
+          isAndroidApp
+            ? "grid-cols-1"
+            : "lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]",
+        ].join(" ")}
+      >
+        {/* Storage */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className={[
+            "overflow-hidden border bg-white shadow-sm",
+            isAndroidApp
+              ? "rounded-[2rem] border-blue-100 shadow-blue-950/5"
+              : "rounded-2xl border-slate-200 p-5 sm:p-6",
+          ].join(" ")}
+        >
+         {isAndroidApp ? (
+  <div className="relative overflow-hidden p-5">
+    <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-blue-100/90 blur-2xl" />
+    <div className="absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-sky-100/80 blur-2xl" />
+
+    <div className="relative">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-500">
+            SafeVault
+          </p>
+
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
+            {usedGB.toFixed(2)} GB
+          </h2>
+
+          <p
+            className={[
+              "mt-1 text-sm font-semibold",
+              isLowStorage ? "text-red-600" : "text-slate-500",
+            ].join(" ")}
+          >
+            used of {totalGB.toFixed(0)} GB
+          </p>
+        </div>
+
+        <Link
+          to="/upgrade"
+          className="shrink-0 rounded-2xl border border-blue-100 bg-white/85 px-3.5 py-2 text-xs font-black text-blue-700 shadow-sm active:scale-95"
+        >
+          Upgrade
+        </Link>
       </div>
 
-      {/* Storage Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 sm:p-6"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-900">
-              Storage usage
-            </p>
-            <p
-  className={`text-xs mt-1 ${
-    isLowStorage ? "text-red-600" : "text-gray-500"
-  }`}
->
-  <span className="font-medium text-gray-900">
-    {usedGB.toFixed(2)} GB
-  </span>{" "}
-  of {totalGB.toFixed(0)} GB used •{" "}
-  <span className="font-medium">
-    {Math.round(percent)}% used
-  </span>
-</p>
+      <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percent}%` }}
+          transition={{ duration: 0.45 }}
+          className={[
+            "h-full rounded-full",
+            isLowStorage ? "bg-red-500" : "bg-blue-600",
+          ].join(" ")}
+        />
+      </div>
 
+      <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-500">
+        <span>{Math.round(percent)}% used</span>
+        <span>{formatSize(totalBytes - usedBytes)} free</span>
+      </div>
+
+      <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current.click()}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3.5 text-sm font-black text-white shadow-lg shadow-blue-600/20 active:scale-[0.98]"
+          aria-label="Upload file"
+        >
+          <UploadIcon className="h-5 w-5" />
+          Upload file
+        </button>
+
+        <Link
+          to="/files"
+          className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-black text-slate-700 shadow-sm active:scale-[0.98]"
+          aria-label="Open files"
+        >
+          Files
+        </Link>
+      </div>
+
+      <AnimatePresence>
+        {isLowStorage && (
+          <motion.p
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
+          >
+            Storage is almost full. Delete unused files or upgrade your plan.
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  </div>
+) : (
+            <>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-950">
+                    Storage
+                  </h2>
+
+                  <p
+                    className={`mt-1 text-sm ${
+                      isLowStorage ? "text-red-600" : "text-slate-500"
+                    }`}
+                  >
+                    <span className="font-semibold text-slate-950">
+                      {usedGB.toFixed(2)} GB
+                    </span>{" "}
+                    of {totalGB.toFixed(0)} GB used
+                  </p>
+                </div>
+
+                <Link
+                  to="/upgrade"
+                  className="w-fit rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  Upgrade
+                </Link>
+              </div>
+
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${percent}%` }}
+                  transition={{ duration: 0.45 }}
+                  className={`h-full rounded-full ${
+                    isLowStorage ? "bg-red-500" : "bg-blue-600"
+                  }`}
+                />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                <span>{Math.round(percent)}% used</span>
+                <span>{formatSize(totalBytes - usedBytes)} available</span>
+              </div>
+
+              <AnimatePresence>
+                {isLowStorage && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700"
+                  >
+                    Storage is almost full. Delete unused files or upgrade your plan.
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+        </motion.div>
+
+        {/* Summary */}
+        <div
+          className={[
+            "border bg-white shadow-sm",
+            isAndroidApp
+              ? "rounded-[2rem] border-slate-100 p-5"
+              : "rounded-2xl border-slate-200 p-5 sm:p-6",
+          ].join(" ")}
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-950">
+              File summary
+            </h2>
+            {isAndroidApp && (
+  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
+    {files.length} items
+  </span>
+)}
           </div>
 
-          <button
-            onClick={() => fileInputRef.current.click()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"
+          <div
+            className={[
+              "mt-5 grid gap-3",
+              isAndroidApp ? "grid-cols-4" : "grid-cols-2",
+            ].join(" ")}
           >
-            Upload
-          </button>
+            <SummaryItem label="All" value={files.length} compact={isAndroidApp} />
+            <SummaryItem label="Images" value={imageCount} compact={isAndroidApp} />
+            <SummaryItem label="Videos" value={videoCount} compact={isAndroidApp} />
+            <SummaryItem label="Docs" value={documentCount} compact={isAndroidApp} />
+          </div>
         </div>
+      </div>
 
-        <div className="mt-4 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percent}%` }}
-            transition={{ duration: 0.6 }}
-            className={`h-full rounded-full ${
-  isLowStorage ? "bg-red-500" : "bg-blue-600"
-}`}
-          />
-        </div>
+      {/* Quick Access */}
+      <div
+        className={[
+          "mt-4 grid gap-3",
+          isAndroidApp ? "grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-5",
+        ].join(" ")}
+      >
+        <QuickLink
+          to="/files"
+          label="All files"
+          description={isAndroidApp ? "Browse" : "Browse everything"}
+          icon={<FolderIcon />}
+          android={isAndroidApp}
+        />
 
-        <AnimatePresence>
-  {isLowStorage && (
-    <motion.p
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 4 }}
-      className="mt-2 text-xs text-red-600"
-    >
-      Low storage • Consider freeing up space
-    </motion.p>
-  )}
-</AnimatePresence>
+        <QuickLink
+          to="/vault"
+          label="Private vault"
+          description={isAndroidApp ? "Locked" : "Protected files"}
+          icon={<VaultIcon />}
+          android={isAndroidApp}
+        />
 
+        <QuickLink
+          to="/files?type=image"
+          label="Images"
+          description={isAndroidApp ? "Photos" : "Photos and graphics"}
+          icon={<ImageIcon />}
+          android={isAndroidApp}
+        />
 
+        <QuickLink
+          to="/files?type=video"
+          label="Videos"
+          description={isAndroidApp ? "Clips" : "Video files"}
+          icon={<VideoIcon />}
+          android={isAndroidApp}
+        />
 
-
-
-
-        {/* Quick Links */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {!isAndroidApp && (
           <QuickLink
-            to="/files"
-            label="All files"
-            icon="→"
-            prominent
+            to="/files?type=document"
+            label="Documents"
+            description="PDFs and docs"
+            icon={<DocumentIcon />}
+            android={isAndroidApp}
           />
-          <QuickLink to="/files?type=image" label="Images" icon="🖼" />
-          <QuickLink to="/files?type=video" label="Videos" icon="▶" />
-          <QuickLink to="/files?type=document" label="Documents" icon="📄" />
-        </div>
-      </motion.div>
+        )}
+      </div>
 
       {/* Recent Files */}
-      <div className="mt-10">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-medium text-gray-900">
-            Recent files
-          </h2>
+      <div
+        className={[
+          "mt-6 overflow-hidden border bg-white shadow-sm",
+          isAndroidApp
+            ? "rounded-[2rem] border-slate-100"
+            : "rounded-2xl border-slate-200",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "flex items-center justify-between border-b",
+            isAndroidApp
+              ? "border-slate-100 px-5 py-4"
+              : "border-slate-200 px-5 py-4",
+          ].join(" ")}
+        >
+          <div>
+            <h2 className="text-base font-semibold text-slate-950">
+              Recent files
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Latest files added to your vault
+            </p>
+          </div>
+
           <Link
             to="/files"
-            className="text-xs font-medium text-gray-500 hover:text-gray-900 transition"
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold text-blue-600 transition hover:bg-blue-50"
           >
-            View all →
+            View all
+            <ArrowIcon />
           </Link>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl divide-y overflow-hidden">
+        <div className="divide-y divide-slate-100">
           {recentFiles.length === 0 && (
-            <div className="p-6 text-sm text-gray-500 text-center">
-              No files uploaded yet
+            <div className="px-6 py-12 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
+                <FolderIcon className="h-5 w-5" />
+              </div>
+
+              <h3 className="mt-4 text-sm font-semibold text-slate-950">
+                No files yet
+              </h3>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Upload your first file to start using SafeVault.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current.click()}
+                className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
+              >
+                <UploadIcon />
+                Upload file
+              </button>
             </div>
           )}
 
-          {recentFiles.map((file) => (
-            <div
-              key={file._id}
-              onClick={() => {
-                if (
-                  file.type?.startsWith("image") ||
-                  file.type?.startsWith("video")
-                ) {
-                  setPreviewFile(file);
-                }
-              }}
-              className="flex items-center justify-between px-4 py-3 text-sm cursor-pointer
-                         hover:bg-gray-50 hover:translate-x-[2px] transition"
-            >
-              <span className="truncate text-gray-900">
-                {file.name}
-              </span>
-              <span className="text-gray-500 text-xs">
-  {formatSize(file.size)}
-</span>
+          {recentFiles.map((file) => {
+            const canPreview =
+              file.type?.startsWith("image") || file.type?.startsWith("video");
 
-            </div>
-          ))}
+            return (
+              <button
+                type="button"
+                key={file._id}
+                onClick={() => {
+                  if (canPreview) {
+                    setPreviewFile(file);
+                  }
+                }}
+                className={[
+                  "flex w-full items-center justify-between gap-4 text-left transition",
+                  isAndroidApp
+                    ? "px-5 py-4 active:bg-slate-50"
+                    : "px-5 py-3.5 hover:bg-slate-50",
+                ].join(" ")}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <FileTypeIcon file={file} />
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-900">
+                      {file.name}
+                    </p>
+
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {canPreview ? "Preview available" : "Stored securely"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-4">
+                  <span className="hidden text-xs text-slate-500 sm:inline">
+                    {formatSize(file.size)}
+                  </span>
+
+                  <span className="text-slate-300">
+                    <ArrowIcon />
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      {/* Android Bottom Navigation */}
+      {isAndroidApp && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-100 bg-white/95 px-4 pb-4 pt-3 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+          <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
+           <BottomNavItem to="/dashboard" label="Home" active icon={<HomeIcon />} />
+<BottomNavItem to="/files" label="Files" icon={<DocumentIcon />} />
+<BottomNavItem to="/vault" label="Vault" icon={<VaultIcon />} />
+<BottomNavItem to="/account" label="Account" icon={<UserIcon />} />
+          </div>
+        </div>
+      )}
 
       {/* Hidden upload input */}
       <input
@@ -278,8 +745,8 @@ const usedGB = usedBytes / 1_000_000_000;
         multiple
         className="hidden"
         onChange={(e) => {
-          const files = Array.from(e.target.files);
-          files.forEach((file) => handleUpload(file));
+          const selectedFiles = Array.from(e.target.files);
+          selectedFiles.forEach((file) => handleUpload(file));
           e.target.value = null;
         }}
       />
@@ -288,14 +755,37 @@ const usedGB = usedBytes / 1_000_000_000;
       <AnimatePresence>
         {uploading && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2
-                       bg-white/90 backdrop-blur border shadow-lg
-                       rounded-full px-5 py-2 text-sm"
+            initial={{ opacity: 0, y: 20, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, x: "-50%" }}
+            className={[
+              "fixed left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm border bg-white p-4 shadow-lg",
+              isAndroidApp
+                ? "bottom-24 rounded-[1.5rem] border-blue-100"
+                : "bottom-6 rounded-xl border-slate-200",
+            ].join(" ")}
           >
-            Uploading <span className="font-medium">{uploadProgress}%</span>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">
+                  Uploading
+                </p>
+                <p className="text-xs text-slate-500">
+                  {uploadProgress}% complete
+                </p>
+              </div>
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <UploadIcon />
+              </div>
+            </div>
+
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-blue-600 transition-all"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -307,8 +797,13 @@ const usedGB = usedBytes / 1_000_000_000;
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="fixed bottom-6 right-4 bg-blue-600 text-white
-                       px-4 py-2 rounded-xl text-sm shadow-lg"
+            className={[
+              "fixed z-50 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg",
+              isAndroidApp ? "bottom-24 left-4 right-4 text-center" : "bottom-6 right-4",
+              toast.toLowerCase().includes("failed")
+                ? "bg-red-600"
+                : "bg-blue-600",
+            ].join(" ")}
           >
             {toast}
           </motion.div>
@@ -324,21 +819,115 @@ const usedGB = usedBytes / 1_000_000_000;
   );
 }
 
-/* ===== Quick Link ===== */
-function QuickLink({ to, label, icon, prominent }) {
+function SummaryItem({ label, value, compact = false }) {
+  return (
+    <div
+      className={[
+        "border bg-slate-50",
+        compact
+          ? "rounded-2xl px-2 py-3 text-center"
+          : "rounded-xl border-slate-200 px-4 py-3",
+      ].join(" ")}
+    >
+      <p
+        className={[
+          "font-medium text-slate-500",
+          compact ? "text-[10px]" : "text-xs",
+        ].join(" ")}
+      >
+        {label}
+      </p>
+      <p
+        className={[
+          "font-bold text-slate-950",
+          compact ? "mt-1 text-lg" : "mt-1 text-xl",
+        ].join(" ")}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function QuickLink({ to, label, description, icon, android = false }) {
   return (
     <Link
       to={to}
-      className={`rounded-xl border px-4 py-3 text-sm font-medium
-        flex items-center justify-between transition
-        ${
-          prominent
-            ? "border-gray-300 bg-gray-100 text-gray-900"
-            : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-        }`}
+      className={[
+        "group border bg-white shadow-sm transition",
+        android
+          ? "rounded-[1.5rem] border-slate-100 p-4 active:scale-[0.98] active:bg-blue-50"
+          : "rounded-2xl border-slate-200 p-4 hover:border-blue-200 hover:bg-blue-50/40",
+      ].join(" ")}
     >
-      <span>{label}</span>
-      <span className="text-xs opacity-70">{icon}</span>
+      <div
+        className={[
+          "flex gap-3",
+          android ? "flex-col" : "items-start justify-between",
+        ].join(" ")}
+      >
+        <div className={["flex min-w-0", android ? "flex-col gap-3" : "gap-3"].join(" ")}>
+          <div
+            className={[
+              "flex shrink-0 items-center justify-center border bg-slate-50 text-slate-600 group-hover:border-blue-200 group-hover:bg-white group-hover:text-blue-700",
+              android ? "h-11 w-11 rounded-2xl" : "h-9 w-9 rounded-lg",
+            ].join(" ")}
+          >
+            {icon}
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-950">{label}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+          </div>
+        </div>
+
+        {!android && (
+          <span className="mt-1 text-slate-300 group-hover:text-blue-600">
+            <ArrowIcon />
+          </span>
+        )}
+      </div>
     </Link>
+  );
+}
+
+function BottomNavItem({ to, label, icon, active = false }) {
+  return (
+    <Link
+      to={to}
+      className={[
+        "flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-semibold active:bg-blue-50",
+        active ? "text-blue-600" : "text-slate-400",
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "grid h-8 w-8 place-items-center rounded-2xl",
+          active ? "bg-blue-50 text-blue-600" : "text-slate-400",
+        ].join(" ")}
+      >
+        {icon}
+      </span>
+      {label}
+    </Link>
+  );
+}
+
+function HomeIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 11l9-8 9 8" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10v10h14V10" />
+    </svg>
+  );
+}
+
+function UserIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 21a8 8 0 10-16 0" />
+      <circle cx="12" cy="8" r="4" strokeWidth="2" />
+    </svg>
   );
 }

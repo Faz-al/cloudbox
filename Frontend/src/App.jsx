@@ -1,16 +1,19 @@
-import { Routes, Route } from "react-router-dom";
-import { useState } from "react";
+import { useAuth } from "./context/AuthContext";
+
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+
+import { App as CapacitorApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
+
 import ViewSharedFile from "./pages/ViewSharedFile";
 import DMCA from "./pages/DMCA";
 import ResetPassword from "./pages/ResetPassword";
 import Trash from "./pages/Trash";
 
-
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
-
-
 
 import AccountSettings from "./pages/AccountSettings";
 
@@ -19,9 +22,6 @@ import SeoArticleLayout from "./layouts/SeoArticleLayout";
 
 import SettingsSecurity from "./pages/SettingsSecurity";
 import Vault from "./pages/Vault";
-
-
-
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -43,45 +43,64 @@ import BestCloudStorageIndia from "./pages/blog/BestCloudStorageIndia";
 import GoogleDriveAlternatives from "./pages/blog/GoogleDriveAlternatives";
 import CloudStoragePrivacyGuide from "./pages/blog/CloudStoragePrivacyGuide";
 import ZeroKnowledgeEncryptionGuide from "./pages/blog/ZeroKnowledgeEncryptionGuide";
-import SanityBlogPage from './pages/blog/SanityBlogPage'
+import SanityBlogPage from "./pages/blog/SanityBlogPage";
 import Faq from "./pages/Faq";
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { App as CapacitorApp } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
-
-import { useRef } from "react";
-
-
-
-
 
 import {
   SecureCloudStorage,
   PrivateCloudStorage,
   EncryptedCloudStorage,
   FreeCloudStorage,
-  CloudStorageIndia
+  CloudStorageIndia,
 } from "./pages/SeoPages";
 
+/**
+ * Android app should not open like a website.
+ * Browser: "/" shows Home page.
+ * Android app: "/" goes directly to dashboard.
+ *
+ * If user is not logged in, your ProtectedRoute should send them to /login.
+ */
+function RootRoute() {
+  const isAndroidApp = Capacitor.getPlatform() === "android";
+  const { user } = useAuth();
 
+  if (isAndroidApp) {
+    return <Navigate to={user ? "/dashboard" : "/login"} replace />;
+  }
 
+  return <Home />;
+}
 
+/**
+ * SEO/blog/marketing pages are useful for website,
+ * but not for the Android app experience.
+ *
+ * If someone opens those routes inside Android app,
+ * redirect them back to dashboard.
+ */
+function WebsiteOnly({ children }) {
+  const isAndroidApp = Capacitor.getPlatform() === "android";
+  const { user } = useAuth();
 
+  if (isAndroidApp) {
+    return <Navigate to={user ? "/dashboard" : "/login"} replace />;
+  }
+
+  return children;
+}
 
 export default function App() {
-  // 🔥 GLOBAL PREVIEW STATE
+  // Global preview state
   const [previewFile, setPreviewFile] = useState(null);
   const [previewFiles, setPreviewFiles] = useState([]);
-    const navigate = useNavigate();
+
+  const navigate = useNavigate();
   const location = useLocation();
-  const [lastBackPress, setLastBackPress] = useState(0);
 
   const previewFileRef = useRef(null);
-const locationRef = useRef(location);
-const lastBackPressRef = useRef(0);
-
-
+  const locationRef = useRef(location);
+  const lastBackPressRef = useRef(0);
 
   const openPreview = (file, files) => {
     if (!file || file.isFolder) return;
@@ -89,153 +108,136 @@ const lastBackPressRef = useRef(0);
     setPreviewFile(file);
   };
 
-  const closePreview = () => setPreviewFile(null);
-
-useEffect(() => {
-  if (Capacitor.getPlatform() !== "android") return;
-
-  let backHandler = null;
-
-  const setupListener = async () => {
-    backHandler = await CapacitorApp.addListener("backButton", () => {
-
-      if (previewFileRef.current) {
-        closePreview();
-        return;
-      }
-
-      if (
-        locationRef.current.pathname !== "/" &&
-        locationRef.current.pathname !== "/dashboard"
-      ) {
-        navigate(-1);
-        return;
-      }
-
-      const now = Date.now();
-      if (now - lastBackPressRef.current < 2000) {
-        CapacitorApp.exitApp();
-      } else {
-        lastBackPressRef.current = now;
-      }
-    });
+  const closePreview = () => {
+    setPreviewFile(null);
   };
 
-  setupListener();
+  useEffect(() => {
+    previewFileRef.current = previewFile;
+    locationRef.current = location;
+  }, [previewFile, location]);
 
-  return () => {
-    if (backHandler && typeof backHandler.remove === "function") {
-      backHandler.remove();
-    }
-  };
-}, [navigate]);
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== "android") return;
 
+    let backHandler = null;
 
-useEffect(() => {
-  previewFileRef.current = previewFile;
-  locationRef.current = location;
-  lastBackPressRef.current = lastBackPress;
-}, [previewFile, location, lastBackPress]);
+    const setupListener = async () => {
+      backHandler = await CapacitorApp.addListener("backButton", () => {
+        // 1. Close preview first
+        if (previewFileRef.current) {
+          closePreview();
+          return;
+        }
 
+        const currentPath = locationRef.current.pathname;
 
+        // 2. If user is inside app pages, go back
+        if (
+          currentPath !== "/" &&
+          currentPath !== "/dashboard" &&
+          currentPath !== "/login" &&
+          currentPath !== "/signup"
+        ) {
+          navigate(-1);
+          return;
+        }
 
+        // 3. Double press to exit on main app/auth screens
+        const now = Date.now();
 
+        if (now - lastBackPressRef.current < 2000) {
+          CapacitorApp.exitApp();
+        } else {
+          lastBackPressRef.current = now;
+        }
+      });
+    };
 
+    setupListener();
 
-    
-
+    return () => {
+      if (backHandler && typeof backHandler.remove === "function") {
+        backHandler.remove();
+      }
+    };
+  }, [navigate]);
 
   return (
     <>
-     <Routes>
+      <Routes>
+        {/* Public file viewer */}
+        <Route path="/view/:token" element={<ViewSharedFile />} />
 
-  {/* Public file viewer */}
-  <Route path="/view/:token" element={<ViewSharedFile />} />
+        {/* SEO + Marketing Public Content Layout - Website only */}
+        <Route
+          element={
+            <WebsiteOnly>
+              <SeoArticleLayout />
+            </WebsiteOnly>
+          }
+        >
+          {/* Marketing Mega Page */}
+          <Route path="/cloud-storage" element={<CloudStorageMain />} />
 
+          {/* SEO Article Pages */}
+          <Route path="/secure-cloud-storage" element={<SecureCloudStorage />} />
+          <Route path="/private-cloud-storage" element={<PrivateCloudStorage />} />
+          <Route path="/encrypted-cloud-storage" element={<EncryptedCloudStorage />} />
+          <Route path="/free-cloud-storage" element={<FreeCloudStorage />} />
+          <Route path="/cloud-storage-india" element={<CloudStorageIndia />} />
 
-      {/* SEO + Marketing Public Content Layout */}
-<Route element={<SeoArticleLayout />}>
+          {/* Blog */}
+          <Route path="/blog" element={<BlogIndex />} />
+          <Route path="/blog/secure-cloud-storage-guide" element={<SecureCloudStorageGuide />} />
+          <Route
+            path="/blog/encrypted-cloud-storage-explained"
+            element={<EncryptedCloudStorageExplained />}
+          />
+          <Route path="/blog/best-cloud-storage-india" element={<BestCloudStorageIndia />} />
+          <Route path="/blog/google-drive-alternatives" element={<GoogleDriveAlternatives />} />
+          <Route path="/blog/cloud-storage-privacy-guide" element={<CloudStoragePrivacyGuide />} />
+          <Route
+            path="/blog/how-zero-knowledge-encryption-works"
+            element={<ZeroKnowledgeEncryptionGuide />}
+          />
 
-  {/* Marketing Mega Page */}
-  <Route path="/cloud-storage" element={<CloudStorageMain />} />
+          <Route path="/blog/:slug" element={<SanityBlogPage />} />
 
-  {/* SEO Article Pages */}
-  <Route path="/secure-cloud-storage" element={<SecureCloudStorage />} />
-  <Route path="/private-cloud-storage" element={<PrivateCloudStorage />} />
-  <Route path="/encrypted-cloud-storage" element={<EncryptedCloudStorage />} />
-  <Route path="/free-cloud-storage" element={<FreeCloudStorage />} />
-  <Route path="/cloud-storage-india" element={<CloudStorageIndia />} />
+          {/* FAQ */}
+          <Route path="/faq" element={<Faq />} />
+        </Route>
 
-  {/* Blog */}
-  <Route path="/blog" element={<BlogIndex />} />
-  <Route path="/blog/secure-cloud-storage-guide" element={<SecureCloudStorageGuide />} />
-  <Route path="/blog/encrypted-cloud-storage-explained" element={<EncryptedCloudStorageExplained />} />
-  <Route path="/blog/best-cloud-storage-india" element={<BestCloudStorageIndia />} />
-    <Route path="/blog/google-drive-alternatives" element={<GoogleDriveAlternatives />} />
-<Route path="/blog/cloud-storage-privacy-guide" element={<CloudStoragePrivacyGuide />} />
-<Route path="/blog/how-zero-knowledge-encryption-works" element={<ZeroKnowledgeEncryptionGuide />} />
+        {/* Everything else uses AppLayout */}
+        <Route element={<AppLayout />}>
+          {/* Public pages */}
+          <Route element={<PublicRoute />}>
+            <Route path="/" element={<RootRoute />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/dmca" element={<DMCA />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+          </Route>
 
-<Route
-  path="/blog/:slug"
-  element={<SanityBlogPage />}
-/>
+          {/* App pages */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard openPreview={openPreview} />} />
+            <Route path="/files" element={<Files openPreview={openPreview} />} />
+            <Route path="/vault" element={<Vault />} />
+            <Route path="/trash" element={<Trash />} />
 
+            <Route path="/upgrade" element={<Upgrade />} />
+            <Route path="/account" element={<AccountSettings />} />
+            <Route path="/settings/security" element={<SettingsSecurity />} />
+          </Route>
+        </Route>
+      </Routes>
 
-
-
-  {/* FAQ */}
-  <Route path="/faq" element={<Faq />} />
-
-</Route>
-
-  {/* Everything else uses AppLayout */}
-  <Route element={<AppLayout />}>
-
-  {/* SEO Public Pages */}
-
-
-
-    {/* Public pages */}
-    <Route element={<PublicRoute />}>
-      <Route path="/" element={<Home />} />
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/dmca" element={<DMCA />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
-
-  
-
-
-
-    </Route>
-
-    {/* App pages */}
-    <Route element={<ProtectedRoute />}>
-      <Route path="/dashboard" element={<Dashboard openPreview={openPreview} />} />
-      <Route path="/files" element={<Files openPreview={openPreview} />} />
-      <Route path="/vault" element={<Vault />} />
-      <Route path="/trash" element={<Trash />} />
-
-      <Route path="/upgrade" element={<Upgrade />} />
-      <Route path="/account" element={<AccountSettings />} />
-      <Route path="/settings/security" element={<SettingsSecurity />} />
-    </Route>
-
-  </Route>
-
-</Routes>
-
-
-
-
-
-
-
-      {/* 🔥 ONE GLOBAL PREVIEW */}
+      {/* Global preview */}
       <ImagePreview
         files={previewFiles}
         activeFile={previewFile}

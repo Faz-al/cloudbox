@@ -1,15 +1,46 @@
 export const API_BASE = "https://api.safevault.in/api";
 
 
+export const getMobileAuthToken = () => {
+  try {
+    return localStorage.getItem("safevault_mobile_token");
+  } catch {
+    return null;
+  }
+};
+
+export const saveMobileAuthToken = (token) => {
+  try {
+    if (token) {
+      localStorage.setItem("safevault_mobile_token", token);
+    }
+  } catch {
+    // ignore storage errors
+  }
+};
+
+export const clearMobileAuthToken = () => {
+  try {
+    localStorage.removeItem("safevault_mobile_token");
+  } catch {
+    // ignore storage errors
+  }
+};
 
 
 
 
 const apiFetch = async (url, options = {}) => {
+  const token = getMobileAuthToken();
+
   const res = await fetch(`${API_BASE}${url}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
   });
 
   const data = await res.json().catch(() => ({}));

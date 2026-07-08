@@ -1,159 +1,92 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <!-- ================= HOME ================= -->
-  <url>
-    <loc>https://safevault.in/</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  <!-- ================= MAIN SEO MONEY PAGE ================= -->
-  <url>
-    <loc>https://safevault.in/cloud-storage</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-
-  <!-- ================= CORE SEO PAGES ================= -->
-  <url>
-    <loc>https://safevault.in/secure-cloud-storage</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/private-cloud-storage</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/encrypted-cloud-storage</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/free-cloud-storage</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/cloud-storage-india</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- ================= MARKETING / TRUST PAGES ================= -->
-  <url>
-    <loc>https://safevault.in/pricing</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/security</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/features</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/about</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <!-- ================= BLOG INDEX ================= -->
-  <url>
-    <loc>https://safevault.in/blog</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- ================= BLOG ARTICLES ================= -->
-  <url>
-    <loc>https://safevault.in/blog/secure-cloud-storage-guide</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/blog/encrypted-cloud-storage-explained</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/blog/best-cloud-storage-india</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/blog/google-drive-alternatives</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/blog/cloud-storage-privacy-guide</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/blog/how-zero-knowledge-encryption-works</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- ================= FAQ ================= -->
-  <url>
-    <loc>https://safevault.in/faq</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <!-- ================= LEGAL / TRUST ================= -->
-  <url>
-    <loc>https://safevault.in/privacy</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/terms</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://safevault.in/contact</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
+      <url>
+        <loc>https://safevault.in/</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/secure-cloud-storage-guide</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/encrypted-cloud-storage-explained</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/best-cloud-storage-india</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/google-drive-alternatives</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/cloud-storage-privacy-guide</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/how-zero-knowledge-encryption-works</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/why-people-are-leaving-google-drive</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/best-secure-cloud-storage-for-private-photos</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/how-secure-file-sharing-works-in-safevault</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/safevault-vs-google-photos-private-photo-storage</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/security-evaluation-frameworks-operational-review-standards</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/how-to-store-private-photos-securely-online</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/why-security-reviews-matter-for-modern-cloud-storage</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/independent-security-review-cloud-infrastructure</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/five-security-principles-behind-safevault</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/running-out-of-phone-storage</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/is-google-photos-really-private</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/best-google-drive-alternatives-for-privacy</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/why-safevault-is-better-for-private-photos</loc>
+      </url>
+    
+      <url>
+        <loc>https://safevault.in/blog/how-safevault-protects-files</loc>
+      </url>
+    
 </urlset>

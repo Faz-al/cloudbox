@@ -7,6 +7,7 @@ import {
   getMe,
   saveMobileAuthToken,
   clearMobileAuthToken,
+  getMobileAuthToken,
 } from "../utils/api";
 
 const AuthContext = createContext(null);
@@ -35,14 +36,30 @@ export const AuthProvider = ({ children }) => {
     }
 
     const checkAuth = async () => {
-      try {
-        const data = await getMe();
+  try {
+    if (Capacitor.getPlatform() === "android") {
+      const savedToken = await getMobileAuthToken();
+      alert(savedToken ? "STARTUP: token found" : "STARTUP: no token found");
+    }
 
-        if (cancelled) return;
+    const data = await getMe();
 
-        setSuspended(false);
-        setUser(normalizeUser(data));
-      } catch (err) {
+    if (cancelled) return;
+
+    if (Capacitor.getPlatform() === "android") {
+      alert("STARTUP: /auth/me success");
+    }
+
+    setSuspended(false);
+    setUser(normalizeUser(data));
+  } catch (err) {
+    if (Capacitor.getPlatform() === "android") {
+      alert(
+        `STARTUP: /auth/me failed - ${err?.status || "no status"} - ${
+          err?.message || "unknown"
+        }`
+      );
+    }
         if (cancelled) return;
 
         if (err.status === 403 || err.data?.message === "Account suspended") {
@@ -71,9 +88,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await apiLogin(email, password);
     
-   
-    if (res?.token) {
+   if (res?.token) {
   await saveMobileAuthToken(res.token);
+
+  if (Capacitor.getPlatform() === "android") {
+    const savedToken = await getMobileAuthToken();
+    alert(savedToken ? "LOGIN: token saved" : "LOGIN: token NOT saved");
+  }
 }
 
     if (res?.requires2FA === true) {

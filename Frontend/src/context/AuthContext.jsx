@@ -39,7 +39,6 @@ export const AuthProvider = ({ children }) => {
   try {
     if (Capacitor.getPlatform() === "android") {
       const savedToken = await getMobileAuthToken();
-      alert(savedToken ? "STARTUP: token found" : "STARTUP: no token found");
     }
 
     const data = await getMe();
@@ -47,18 +46,13 @@ export const AuthProvider = ({ children }) => {
     if (cancelled) return;
 
     if (Capacitor.getPlatform() === "android") {
-      alert("STARTUP: /auth/me success");
     }
 
     setSuspended(false);
     setUser(normalizeUser(data));
   } catch (err) {
     if (Capacitor.getPlatform() === "android") {
-      alert(
-        `STARTUP: /auth/me failed - ${err?.status || "no status"} - ${
-          err?.message || "unknown"
-        }`
-      );
+      
     }
         if (cancelled) return;
 
@@ -93,7 +87,6 @@ export const AuthProvider = ({ children }) => {
 
   if (Capacitor.getPlatform() === "android") {
     const savedToken = await getMobileAuthToken();
-    alert(savedToken ? "LOGIN: token saved" : "LOGIN: token NOT saved");
   }
 }
 

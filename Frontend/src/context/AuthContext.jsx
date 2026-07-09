@@ -7,7 +7,6 @@ import {
   getMe,
   saveMobileAuthToken,
   clearMobileAuthToken,
-  getMobileAuthToken,
 } from "../utils/api";
 
 const AuthContext = createContext(null);
@@ -36,24 +35,14 @@ export const AuthProvider = ({ children }) => {
     }
 
     const checkAuth = async () => {
-  try {
-    if (Capacitor.getPlatform() === "android") {
-      const savedToken = await getMobileAuthToken();
-    }
+      try {
+        const data = await getMe();
 
-    const data = await getMe();
+        if (cancelled) return;
 
-    if (cancelled) return;
-
-    if (Capacitor.getPlatform() === "android") {
-    }
-
-    setSuspended(false);
-    setUser(normalizeUser(data));
-  } catch (err) {
-    if (Capacitor.getPlatform() === "android") {
-      
-    }
+        setSuspended(false);
+        setUser(normalizeUser(data));
+      } catch (err) {
         if (cancelled) return;
 
         if (err.status === 403 || err.data?.message === "Account suspended") {
@@ -81,14 +70,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await apiLogin(email, password);
-    
-   if (res?.token) {
-  await saveMobileAuthToken(res.token);
 
-  if (Capacitor.getPlatform() === "android") {
-    const savedToken = await getMobileAuthToken();
-  }
-}
+    if (res?.token) {
+      await saveMobileAuthToken(res.token);
+    }
 
     if (res?.requires2FA === true) {
       return {
@@ -115,44 +100,44 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-  setLoggingOut(true);
+    setLoggingOut(true);
 
-  // Clear frontend immediately so protected pages stop rendering.
-  setUser(null);
-  setSuspended(false);
+    // Clear frontend immediately so protected pages stop rendering.
+    setUser(null);
+    setSuspended(false);
 
-  try {
-    await apiLogout();
-  } catch (err) {
-    console.error("Logout request failed", err);
-  }
-
-  try {
-    if (Capacitor.getPlatform() === "android") {
-      await CapacitorCookies.clearCookies({
-        url: "https://api.safevault.in",
-      });
-
-      await CapacitorCookies.clearCookies({
-        url: "https://api.safevault.in/api",
-      });
-
-      await CapacitorCookies.clearAllCookies();
+    try {
+      await apiLogout();
+    } catch (err) {
+      console.error("Logout request failed", err);
     }
-  } catch (err) {
-    console.error("Failed to clear native cookies", err);
-  }
 
- try {
- await clearMobileAuthToken();
-localStorage.removeItem("lastFolder");
-sessionStorage.clear();
-} catch {
-  // ignore cleanup errors
-}
+    try {
+      if (Capacitor.getPlatform() === "android") {
+        await CapacitorCookies.clearCookies({
+          url: "https://api.safevault.in",
+        });
 
-  setLoggingOut(false);
-};
+        await CapacitorCookies.clearCookies({
+          url: "https://api.safevault.in/api",
+        });
+
+        await CapacitorCookies.clearAllCookies();
+      }
+    } catch (err) {
+      console.error("Failed to clear native cookies", err);
+    }
+
+    try {
+      await clearMobileAuthToken();
+      localStorage.removeItem("lastFolder");
+      sessionStorage.clear();
+    } catch {
+      // ignore cleanup errors
+    }
+
+    setLoggingOut(false);
+  };
 
   if (loading || loggingOut) {
     return (

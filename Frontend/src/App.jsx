@@ -45,6 +45,8 @@ import CloudStoragePrivacyGuide from "./pages/blog/CloudStoragePrivacyGuide";
 import ZeroKnowledgeEncryptionGuide from "./pages/blog/ZeroKnowledgeEncryptionGuide";
 import SanityBlogPage from "./pages/blog/SanityBlogPage";
 import Faq from "./pages/Faq";
+import DeleteAccount from "./pages/DeleteAccount";
+
 
 import {
   SecureCloudStorage,
@@ -221,6 +223,7 @@ export default function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/delete-account" element={<DeleteAccount />} />
           </Route>
 
           {/* App pages */}

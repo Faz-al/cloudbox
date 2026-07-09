@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
     
    
     if (res?.token) {
-  saveMobileAuthToken(res.token);
+  await saveMobileAuthToken(res.token);
 }
 
     if (res?.requires2FA === true) {
@@ -130,9 +130,9 @@ export const AuthProvider = ({ children }) => {
   }
 
  try {
-  clearMobileAuthToken();
-  localStorage.removeItem("lastFolder");
-  sessionStorage.clear();
+ await clearMobileAuthToken();
+localStorage.removeItem("lastFolder");
+sessionStorage.clear();
 } catch {
   // ignore cleanup errors
 }

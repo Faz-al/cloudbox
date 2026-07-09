@@ -1,37 +1,62 @@
+import { Preferences } from "@capacitor/preferences";
+
 export const API_BASE = "https://api.safevault.in/api";
 
+const MOBILE_TOKEN_KEY = "safevault_mobile_token";
 
-export const getMobileAuthToken = () => {
+export const getMobileAuthToken = async () => {
   try {
-    return localStorage.getItem("safevault_mobile_token");
-  } catch {
-    return null;
-  }
-};
+    const nativeToken = await Preferences.get({ key: MOBILE_TOKEN_KEY });
 
-export const saveMobileAuthToken = (token) => {
-  try {
-    if (token) {
-      localStorage.setItem("safevault_mobile_token", token);
+    if (nativeToken?.value) {
+      return nativeToken.value;
     }
+
+    return localStorage.getItem(MOBILE_TOKEN_KEY);
   } catch {
-    // ignore storage errors
+    try {
+      return localStorage.getItem(MOBILE_TOKEN_KEY);
+    } catch {
+      return null;
+    }
   }
 };
 
-export const clearMobileAuthToken = () => {
+export const saveMobileAuthToken = async (token) => {
+  if (!token) return;
+
   try {
-    localStorage.removeItem("safevault_mobile_token");
+    localStorage.setItem(MOBILE_TOKEN_KEY, token);
   } catch {
-    // ignore storage errors
+    // ignore localStorage errors
+  }
+
+  try {
+    await Preferences.set({
+      key: MOBILE_TOKEN_KEY,
+      value: token,
+    });
+  } catch {
+    // ignore native storage errors
   }
 };
 
+export const clearMobileAuthToken = async () => {
+  try {
+    localStorage.removeItem(MOBILE_TOKEN_KEY);
+  } catch {
+    // ignore localStorage errors
+  }
 
-
+  try {
+    await Preferences.remove({ key: MOBILE_TOKEN_KEY });
+  } catch {
+    // ignore native storage errors
+  }
+};
 
 const apiFetch = async (url, options = {}) => {
-  const token = getMobileAuthToken();
+  const token = await getMobileAuthToken();
 
   const res = await fetch(`${API_BASE}${url}`, {
     credentials: "include",
@@ -45,35 +70,28 @@ const apiFetch = async (url, options = {}) => {
 
   const data = await res.json().catch(() => ({}));
 
-  // 🔒 Hard block suspended users
-  
+  if (!res.ok) {
+    const message = data?.message || "Request failed";
 
- if (!res.ok) {
-  const message = data?.message || "Request failed";
+    if (message === "Vault locked") {
+      window.dispatchEvent(
+        new CustomEvent("toast", {
+          detail: {
+            type: "error",
+            message: "Vault is locked",
+          },
+        })
+      );
+    }
 
-  // 🔒 Vault locked → notify user AND let caller handle it
-  if (message === "Vault locked") {
-    window.dispatchEvent(
-      new CustomEvent("toast", {
-        detail: {
-          type: "error",
-          message: "Vault is locked",
-        },
-      })
-    );
+    const err = new Error(message);
+    err.status = res.status;
+    err.data = data;
+    throw err;
   }
-
-  const err = new Error(message);
-  err.status = res.status;
-  err.data = data;
-  throw err;
-}
-
-
 
   return data;
 };
-
 
 /* ===== AUTH ===== */
 export const signup = (email, password) =>
@@ -88,13 +106,10 @@ export const login = (email, password) =>
     body: JSON.stringify({ email, password }),
   });
 
-export const logout = () =>
-  apiFetch("/auth/logout", { method: "POST" });
+export const logout = () => apiFetch("/auth/logout", { method: "POST" });
 
 export const logoutEverywhere = () =>
   apiFetch("/auth/logout-all", { method: "POST" });
-
-
 
 export const getMe = async () => {
   const data = await apiFetch("/auth/me");
@@ -107,24 +122,17 @@ export const changePassword = (currentPassword, newPassword) =>
     body: JSON.stringify({ currentPassword, newPassword }),
   });
 
-
 export const toggleEmail2FA = (body = {}) =>
   apiFetch("/auth/security/2fa-toggle", {
     method: "POST",
     body: JSON.stringify(body),
   });
 
-
-
-
-
 /* ===== FILES ===== */
-export const getFiles = (query = "") =>
-  apiFetch(`/files${query}`);
-
+export const getFiles = (query = "") => apiFetch(`/files${query}`);
 
 export const uploadFile = async (file, parent = null) => {
-  const token = getMobileAuthToken();
+  const token = await getMobileAuthToken();
 
   const formData = new FormData();
   formData.append("file", file);
@@ -139,15 +147,14 @@ export const uploadFile = async (file, parent = null) => {
     body: formData,
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || "Upload failed");
+
   return data;
 };
 
-
 export const moveToTrash = (id) =>
   apiFetch(`/files/${id}`, { method: "DELETE" });
-
 
 export const renameFile = (id, name) =>
   apiFetch(`/files/${id}/rename`, {
@@ -155,17 +162,12 @@ export const renameFile = (id, name) =>
     body: JSON.stringify({ name }),
   });
 
-
-  export const createFolder = (name, parent = null) =>
+export const createFolder = (name, parent = null) =>
   apiFetch("/files/folder", {
     method: "POST",
     body: JSON.stringify({ name, parent }),
   });
 
-
-
-
-  /* ===== VAULT ===== */
 /* ===== VAULT ===== */
 export const setupVaultPin = (pin) =>
   apiFetch("/files/vault/setup", {
@@ -179,31 +181,21 @@ export const unlockVault = (pin) =>
     body: JSON.stringify({ pin }),
   });
 
-export const getVaultFiles = () =>
-  apiFetch("/files/vault");
-
-
+export const getVaultFiles = () => apiFetch("/files/vault");
 
 export const unvaultFile = (id) =>
   apiFetch(`/files/vault/${id}`, {
     method: "DELETE",
   });
 
-
-export const getVaultStatus = () =>
-  apiFetch("/files/vault/status");
-
+export const getVaultStatus = () => apiFetch("/files/vault/status");
 
 export const vaultFile = (id) =>
   apiFetch(`/files/vault/${id}`, {
     method: "POST",
   });
 
-
-
-
-/* ===== VIEWER ACCESS (PHASE 3) ===== */
-
+/* ===== VIEWER ACCESS ===== */
 export const checkViewerAccess = (fileId) =>
   apiFetch(`/viewer/access/${fileId}`);
 

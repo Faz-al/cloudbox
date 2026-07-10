@@ -1009,7 +1009,7 @@ module.exports = {
   listTrash,
   deleteForever,
   restoreFromTrash,
-  emptyTrash, 
+  emptyTrash,
   setupVaultPin,
   unlockVault,
   vaultFile,
@@ -1023,9 +1023,8 @@ module.exports = {
   getShareStatus,
   toggleShare,
 
-
-
-
+  // Used by scheduled trash cleanup job
+  permanentDeleteRecursive,
 };
 
 

@@ -55,56 +55,64 @@ export default function Signup() {
   };
 
   const handleSubmit = async (e) => {
-    if (e?.preventDefault) e.preventDefault();
+  if (e?.preventDefault) e.preventDefault();
 
-    setError("");
-    setOtpError("");
+  setError("");
+  setOtpError("");
 
-    const cleanEmail = email.trim();
+  const cleanEmail = email.trim();
 
-    if (!isValidEmail(cleanEmail)) {
-      setError("Please enter a valid email address");
-      return;
+  if (!isValidEmail(cleanEmail)) {
+    setError("Please enter a valid email address");
+    return;
+  }
+
+  if (!cleanEmail || !password || !confirmPassword) {
+    setError("All fields are required");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  if (password.length < 8) {
+    setError("Password must be at least 8 characters");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        email: cleanEmail,
+        password,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Signup failed");
     }
 
-    if (!cleanEmail || !password || !confirmPassword) {
-      setError("All fields are required");
-      return;
+    if (window.fbq) {
+      window.fbq("track", "CompleteRegistration");
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const res = await fetch(`${API_BASE}/auth/signup/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: cleanEmail, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "OTP failed");
-
-      setEmail(cleanEmail);
-      setStep("otp");
-      setCooldown(60);
-    } catch (err) {
-      setError(err.message || "Signup failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setEmail(cleanEmail);
+    setStep("done");
+  } catch (err) {
+    setError(err.message || "Signup failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const verifyOTP = async () => {
     setOtpError("");

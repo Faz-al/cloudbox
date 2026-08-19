@@ -79,12 +79,56 @@ const sendLoginAlertEmail = async ({ email, ip, browser, os, location }) => {
 
 
 
-// block legacy signup
+// direct signup (OTP signup remains available separately)
 const signup = async (req, res) => {
-  return res.status(400).json({
-    message: "Direct signup disabled. Use OTP verification.",
-  });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password || password.length < 8) {
+      return res.status(400).json({ message: "Invalid data" });
+    }
+
+    const emailNormalized = email.trim().toLowerCase();
+
+    const exists = await User.findOne({ email: emailNormalized });
+
+    if (exists) {
+      return res.status(400).json({
+        message: "User already exists",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await User.create({
+      email: emailNormalized,
+      password: passwordHash,
+      storageLimit: 5 * 1024 * 1024 * 1024,
+      usedStorage: 0,
+      plan: "free",
+      termsAcceptedAt: new Date(),
+      termsVersion: "2026-01",
+    });
+
+    res.status(201).json({
+      message: "Account created",
+    });
+  } catch (err) {
+    console.error("DIRECT SIGNUP ERROR:", err);
+
+    if (err.code === 11000) {
+      return res.status(400).json({
+        message: "User already exists",
+      });
+    }
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
 };
+
+
 
 // send otp
 const signupStart = async (req, res) => {

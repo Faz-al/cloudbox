@@ -2,20 +2,75 @@ import { useEffect, useState } from "react";
 import { getUsers, suspendUser, unsuspendUser, getFiles } from "../api/admin";
 
 
+function getFileTypeLabel(file) {
+  const name = file?.name || "";
+  const mime = file?.type || "";
 
+  if (file?.isFolder || mime === "folder") return "FOLDER";
+
+  const extension = name.includes(".")
+    ? name.split(".").pop().toUpperCase()
+    : "";
+
+  if (extension) return extension;
+
+  if (mime.includes("jpeg")) return "JPG";
+  if (mime.includes("png")) return "PNG";
+  if (mime.includes("webp")) return "WEBP";
+  if (mime.includes("gif")) return "GIF";
+  if (mime.includes("pdf")) return "PDF";
+  if (mime.includes("mp4")) return "MP4";
+  if (mime.includes("quicktime")) return "MOV";
+  if (mime.includes("word")) return "DOCX";
+  if (mime.includes("excel") || mime.includes("spreadsheet")) return "XLSX";
+  if (mime.includes("powerpoint") || mime.includes("presentation")) return "PPTX";
+  if (mime.includes("zip")) return "ZIP";
+  if (mime.includes("text")) return "TXT";
+
+  return "FILE";
+}
+
+function getParentId(file) {
+  if (!file) return null;
+
+  if (typeof file.parent === "string") return file.parent;
+  if (file.parent?._id) return file.parent._id;
+
+  if (typeof file.folder === "string") return file.folder;
+  if (file.folder?._id) return file.folder._id;
+
+  if (typeof file.parentId === "string") return file.parentId;
+  if (typeof file.folderId === "string") return file.folderId;
+
+  return null;
+}
 
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [files, setFiles] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  const [openedFolder, setOpenedFolder] = useState(null);
+
   useEffect(() => {
     getUsers().then(r => setUsers(r.data));
     getFiles().then(r => setFiles(r.data));
   }, []);
 
-  const userFiles = selectedUser
-  ? files.filter(f => f.user?._id === selectedUser._id)
+  const allSelectedUserFiles = selectedUser
+  ? files.filter((f) => f.user?._id === selectedUser._id)
+  : [];
+
+const userFiles = selectedUser
+  ? allSelectedUserFiles.filter((f) => {
+      const parentId = getParentId(f);
+
+      if (openedFolder) {
+        return parentId === openedFolder._id;
+      }
+
+      return !parentId;
+    })
   : [];
 
 const [previewFile, setPreviewFile] = useState(null);
@@ -49,7 +104,10 @@ const [previewFile, setPreviewFile] = useState(null);
               {users.map(u => (
                 <tr
                   key={u._id}
-                  onClick={() => setSelectedUser(u)}
+                  onClick={() => {
+  setSelectedUser(u);
+  setOpenedFolder(null);
+}}
                   className={`cursor-pointer hover:bg-slate-50 ${
                     selectedUser?._id === u._id ? "bg-slate-100" : ""
                   }`}
@@ -100,7 +158,29 @@ const [previewFile, setPreviewFile] = useState(null);
             </div>
 
             <div>
-              <p className="text-xs text-slate-500 mb-2">Files uploaded</p>
+<div className="flex items-center justify-between gap-3 mb-2">
+  <div>
+    <p className="text-xs text-slate-500">
+      {openedFolder ? "Folder contents" : "Files uploaded"}
+    </p>
+
+    {openedFolder && (
+      <p className="text-sm font-medium text-slate-900 mt-1">
+        {openedFolder.name}
+      </p>
+    )}
+  </div>
+
+  {openedFolder && (
+    <button
+      type="button"
+      onClick={() => setOpenedFolder(null)}
+      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+    >
+      Back
+    </button>
+  )}
+</div>
 
              <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-64 overflow-auto text-sm bg-white">
   {userFiles.map(f => (
@@ -108,6 +188,13 @@ const [previewFile, setPreviewFile] = useState(null);
       key={f._id}
       onClick={(e) => {
   e.stopPropagation();
+
+  if (f.isFolder || f.type === "folder") {
+    setOpenedFolder(f);
+    setPreviewFile(null);
+    return;
+  }
+
   setPreviewFile(f);
 }}
 
@@ -115,19 +202,33 @@ const [previewFile, setPreviewFile] = useState(null);
       className="px-3 py-2 flex justify-between items-center text-slate-900 hover:bg-slate-50 cursor-pointer"
     >
       <div>
-        <div className="font-medium">{f.name}</div>
-        <div className="text-xs text-slate-400">
-         {!f.isVaulted && f.isShared && f.shareEnabled ? "Public" : "Private"} · {f.isVaulted ? "Vault" : "Home"}
+        <div className="flex items-center gap-2">
+  <div className="font-medium truncate">{f.name}</div>
 
+  <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+    {getFileTypeLabel(f)}
+  </span>
+</div>
 
-        </div>
+<div className="text-xs text-slate-400">
+  {!f.isVaulted && f.isShared && f.shareEnabled ? "Public" : "Private"} ·{" "}
+  {f.isVaulted ? "Vault" : "Home"} · {f.type || "Unknown type"}
+</div>
       </div>
 
-      <span className={`text-xs ${
-        f.isFlagged ? "text-yellow-600" : "text-green-600"
-      }`}>
-        {f.isFlagged ? "Flagged" : "Clean"}
-      </span>
+      {f.isFolder || f.type === "folder" ? (
+  <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+    Open
+  </span>
+) : (
+  <span
+    className={`text-xs ${
+      f.isFlagged ? "text-yellow-600" : "text-green-600"
+    }`}
+  >
+    {f.isFlagged ? "Flagged" : "Clean"}
+  </span>
+)}
     </div>
   ))}
 
@@ -172,8 +273,8 @@ const [previewFile, setPreviewFile] = useState(null);
         )}
       </div>
 
-        {previewFile && (
-  <div className="fixed inset-0 bg-black/40 flex justify-end z-50">
+{previewFile && !(previewFile.isFolder || previewFile.type === "folder") && (
+    <div className="fixed inset-0 bg-black/40 flex justify-end z-50">
     <div className="w-[500px] bg-white h-full p-6 overflow-auto">
 
       <div className="flex justify-between items-center mb-4">
@@ -203,10 +304,26 @@ const [previewFile, setPreviewFile] = useState(null);
       </div>
 
       <div className="space-y-3 text-sm">
-        <div><b>Owner:</b> {previewFile.user?.email}</div>
-        <div><b>Location:</b> {previewFile.isVaulted ? "Vault" : "Home"}</div>
-        <div><b>Status:</b> {previewFile.isFlagged ? "Flagged" : "Clean"}</div>
-      </div>
+  <div>
+    <b>Owner:</b> {previewFile.user?.email}
+  </div>
+
+  <div>
+    <b>File type:</b> {getFileTypeLabel(previewFile)}
+  </div>
+
+  <div>
+    <b>MIME type:</b> {previewFile.type || "Unknown"}
+  </div>
+
+  <div>
+    <b>Location:</b> {previewFile.isVaulted ? "Vault" : "Home"}
+  </div>
+
+  <div>
+    <b>Status:</b> {previewFile.isFlagged ? "Flagged" : "Clean"}
+  </div>
+</div>
 
     </div>
   </div>

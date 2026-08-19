@@ -46,6 +46,7 @@ import ZeroKnowledgeEncryptionGuide from "./pages/blog/ZeroKnowledgeEncryptionGu
 import SanityBlogPage from "./pages/blog/SanityBlogPage";
 import Faq from "./pages/Faq";
 import DeleteAccount from "./pages/DeleteAccount";
+import DeleteCalculatorData from "./pages/DeleteCalculatorData";
 
 
 import {
@@ -224,6 +225,10 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/delete-account" element={<DeleteAccount />} />
+            <Route
+  path="/delete-calculator-data"
+  element={<DeleteCalculatorData />}
+/>
           </Route>
 
           {/* App pages */}

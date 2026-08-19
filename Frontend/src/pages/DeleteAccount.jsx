@@ -37,7 +37,7 @@ export default function DeleteAccount() {
                 href="mailto:support@safevault.in"
                 className="font-semibold text-blue-600"
               >
-                support@safevault.in
+                Acidhouseonline@gmail.com
               </a>{" "}
               with the subject line:
             </p>
@@ -90,7 +90,7 @@ export default function DeleteAccount() {
             </p>
 
             <p className="font-semibold text-slate-950">
-              support@safevault.in
+              Acidhouseonline@gmail.com
             </p>
           </section>
         </div>

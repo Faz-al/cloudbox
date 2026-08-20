@@ -1070,7 +1070,9 @@ const openFilePicker = async () => {
       </div>
 
 
-        {showUploadOptions && (isAndroidApp || isMobileDevice) && (
+        {showUploadOptions &&
+  (isAndroidApp || isMobileDevice) &&
+  createPortal(
   <div
   className={[
     "fixed inset-0 z-[9999] flex justify-center bg-slate-950/40 p-3 backdrop-blur-[2px]",
@@ -1170,7 +1172,8 @@ const openFilePicker = async () => {
         </button>
       </div>
     </div>
-  </div>
+    </div>,
+  document.body
 )}
 
 

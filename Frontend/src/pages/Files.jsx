@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
@@ -102,6 +103,10 @@ function GridIcon({ className = "h-4 w-4" }) {
 export default function Files({ initialMode = "files" }) {
   const navigate = useNavigate();
   const isAndroidApp = Capacitor.getPlatform() === "android";
+  
+  const isMobileDevice =
+  typeof window !== "undefined" &&
+  window.matchMedia("(max-width: 767px)").matches;
 
   const [searchParams] = useSearchParams();
   const folderFromURL = searchParams.get("folder");
@@ -119,6 +124,28 @@ export default function Files({ initialMode = "files" }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
   const [showUploadOptions, setShowUploadOptions] = useState(false);
+
+  useEffect(() => {
+  if (!showUploadOptions || isAndroidApp) return;
+
+  const previousOverflow = document.body.style.overflow;
+
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    document.body.style.overflow = previousOverflow;
+  };
+}, [showUploadOptions, isAndroidApp]);
+
+
+const handleUploadClick = () => {
+  if (isAndroidApp || isMobileDevice) {
+    setShowUploadOptions(true);
+    return;
+  }
+
+  fileInputRef.current?.click();
+};
 
   const [view, setView] = useState("list");
   const [files, setFiles] = useState([]);
@@ -767,7 +794,7 @@ const openFilePicker = async () => {
                     />
 
                     <button
-                      onClick={() => setShowUploadOptions(true)}
+                      onClick={handleUploadClick}
                       className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
                     >
                       <UploadIcon />
@@ -891,7 +918,7 @@ const openFilePicker = async () => {
 
                 {mode === "files" && (
                   <button
-                    onClick={() => setShowUploadOptions(true)}
+                    onClick={handleUploadClick}
                     className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
                   >
                     <UploadIcon />
@@ -1043,9 +1070,12 @@ const openFilePicker = async () => {
       </div>
 
 
-        {showUploadOptions && (
+        {showUploadOptions && (isAndroidApp || isMobileDevice) && (
   <div
-    className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/40 p-3 backdrop-blur-[2px] sm:items-center"
+  className={[
+    "fixed inset-0 z-[9999] flex justify-center bg-slate-950/40 p-3 backdrop-blur-[2px]",
+    isAndroidApp ? "items-end" : "items-center",
+  ].join(" ")}
     onClick={() => setShowUploadOptions(false)}
   >
     <div

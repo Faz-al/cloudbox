@@ -1,6 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { getFiles } from "../utils/api";
@@ -219,14 +220,50 @@ export default function Dashboard() {
   const { user } = useAuth();
   const isAndroidApp = Capacitor.getPlatform() === "android";
 
+  const isMobileDevice =
+  typeof window !== "undefined" &&
+  window.matchMedia("(max-width: 767px)").matches;
+
   const [files, setFiles] = useState([]);
   const [previewFile, setPreviewFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [toast, setToast] = useState("");
   const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+  if (!showUploadOptions || isAndroidApp) return;
+
+  const previousOverflow = document.body.style.overflow;
+
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    document.body.style.overflow = previousOverflow;
+  };
+}, [showUploadOptions, isAndroidApp]);
  
   
+
+const handleUploadClick = () => {
+  if (isAndroidApp || isMobileDevice) {
+    setShowUploadOptions(true);
+    return;
+  }
+
+  fileInputRef.current?.click();
+};
+
+const handleDesktopFileSelected = (event) => {
+  const file = event.target.files?.[0];
+
+  if (file) {
+    handleUpload(file);
+  }
+
+  event.target.value = "";
+};
 
 
   useEffect(() => {
@@ -405,7 +442,7 @@ const openFilePicker = async () => {
     xhr.send(formData);
   };
 
-  return (
+      return (
     <div
       className={[
         "min-h-full",
@@ -414,6 +451,15 @@ const openFilePicker = async () => {
   : "px-4 py-5 sm:px-6 lg:px-8 lg:py-7",
       ].join(" ")}
     >
+
+            <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleDesktopFileSelected}
+      />
+
+      
       {/* Website header only. Android starts directly with storage card. */}
 {!isAndroidApp && (
   <div className="mb-7 flex flex-col gap-4 border-b border-slate-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
@@ -437,7 +483,7 @@ const openFilePicker = async () => {
 
       <button
         type="button"
-        onClick={() => setShowUploadOptions(true)}
+        onClick={handleUploadClick}
         className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
       >
         <UploadIcon />
@@ -522,7 +568,7 @@ const openFilePicker = async () => {
       <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
         <button
           type="button"
-          onClick={() => setShowUploadOptions(true)}
+          onClick={handleUploadClick}
           className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3.5 text-sm font-black text-white shadow-lg shadow-blue-600/20 active:scale-[0.98]"
           aria-label="Upload file"
         >
@@ -749,7 +795,7 @@ const openFilePicker = async () => {
 
               <button
                 type="button"
-                onClick={() => setShowUploadOptions(true)}
+                onClick={handleUploadClick}
                 className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
               >
                 <UploadIcon />
@@ -886,11 +932,18 @@ const openFilePicker = async () => {
   onClose={() => setPreviewFile(null)}
 />
 
-{showUploadOptions && (
-  <div
-    className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/40 px-3 pb-3 backdrop-blur-[2px] sm:items-center sm:p-4"
-    onClick={() => setShowUploadOptions(false)}
-  >
+{showUploadOptions &&
+  (isAndroidApp || isMobileDevice) &&
+  createPortal(
+    <div
+  className={[
+    "fixed inset-0 z-[9999] flex justify-center bg-slate-950/40 px-3 backdrop-blur-[2px]",
+    isAndroidApp
+      ? "items-end pb-3 sm:items-center sm:p-4"
+      : "items-center p-3 sm:p-4",
+  ].join(" ")}
+  onClick={() => setShowUploadOptions(false)}
+>
     <div
       className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_-10px_50px_rgba(15,23,42,0.25)]"
       onClick={(e) => e.stopPropagation()}
@@ -1072,7 +1125,8 @@ const openFilePicker = async () => {
         </button>
       </div>
     </div>
-  </div>
+    </div>,
+  document.body
 )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { API_BASE } from "../utils/api";
+import { trackSignup } from "../utils/analytics";
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -98,15 +99,20 @@ export default function Signup() {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.message || "Signup failed");
-    }
+  throw new Error(data.message || "Signup failed");
+}
 
-    if (window.fbq) {
-      window.fbq("track", "CompleteRegistration");
-    }
+if (window.fbq) {
+  window.fbq("track", "CompleteRegistration");
+}
 
-    setEmail(cleanEmail);
-    setStep("done");
+// Firebase Analytics — only runs after signup succeeds.
+// Tracking failure will not affect SafeVault signup.
+await trackSignup();
+
+setEmail(cleanEmail);
+setStep("done");
+
   } catch (err) {
     setError(err.message || "Signup failed");
   } finally {

@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
-
+import { FilePicker } from "@capawesome/capacitor-file-picker";
 import Breadcrumb from "../components/Breadcrumb";
 import FileRow from "../components/FileRow";
 import FileGridItem from "../components/FileGridItem";
 import ImagePreview from "../components/ImagePreview";
 import { moveToTrash, getFiles, createFolder } from "../utils/api";
 import { API_BASE } from "../utils/api";
+import { trackFirstFileUpload } from "../utils/analytics";
 import { vaultFile } from "../utils/api";
 
 function BackIcon({ className = "h-4 w-4" }) {
@@ -117,6 +118,7 @@ export default function Files({ initialMode = "files" }) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   const [view, setView] = useState("list");
   const [files, setFiles] = useState([]);
@@ -240,27 +242,151 @@ export default function Files({ initialMode = "files" }) {
     (f) => !f.isFolder && (f.type?.startsWith("image") || f.type?.startsWith("video"))
   );
 
-  const handleFileSelected = (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
 
-    let index = 0;
 
-    const uploadNext = () => {
-      if (index >= files.length) {
-        setUploading(false);
-        setUploadProgress(0);
-        reloadFiles();
-        return;
-      }
 
-      const file = files[index++];
-      uploadSingleFile(file, uploadNext);
-    };
+  const uploadSelectedFiles = (selectedFiles) => {
+  if (!selectedFiles.length) return;
 
-    uploadNext();
-    e.target.value = null;
+  let index = 0;
+
+const uploadNext = async () => {
+  if (index >= selectedFiles.length) {
+  setUploading(false);
+  setUploadProgress(0);
+
+  // Track the user's first successful upload.
+  // Only fire when they had no files before this upload.
+  if (files.length === 0 && selectedFiles.length > 0) {
+    await trackFirstFileUpload(
+      selectedFiles[0]?.type || "unknown"
+    );
+  }
+
+  reloadFiles();
+  return;
+}
+
+    const file = selectedFiles[index++];
+    uploadSingleFile(file, uploadNext);
   };
+
+  uploadNext();
+};
+
+const openMediaPicker = async () => {
+  try {
+    const result = await FilePicker.pickMedia({
+      limit: 0,
+    });
+
+    if (!result.files?.length) return;
+
+    const selectedFiles = [];
+
+    for (const pickedFile of result.files) {
+      try {
+        let blob;
+
+        if (pickedFile.blob) {
+          blob = pickedFile.blob;
+        } else if (pickedFile.path) {
+          const response = await fetch(
+            Capacitor.convertFileSrc(pickedFile.path)
+          );
+
+          blob = await response.blob();
+        } else {
+          continue;
+        }
+
+        selectedFiles.push(
+          new File(
+            [blob],
+            pickedFile.name || "upload",
+            {
+              type:
+                pickedFile.mimeType ||
+                blob.type ||
+                "application/octet-stream",
+            }
+          )
+        );
+      } catch (error) {
+        console.error("Failed to prepare media:", error);
+      }
+    }
+
+    uploadSelectedFiles(selectedFiles);
+  } catch (error) {
+    console.error("Media picker cancelled or failed:", error);
+  }
+};
+
+const openFilePicker = async () => {
+  try {
+    const result = await FilePicker.pickFiles({
+      limit: 0,
+    });
+
+    if (!result.files?.length) return;
+
+    const selectedFiles = [];
+
+    for (const pickedFile of result.files) {
+      try {
+        let blob;
+
+        if (pickedFile.blob) {
+          blob = pickedFile.blob;
+        } else if (pickedFile.path) {
+          const response = await fetch(
+            Capacitor.convertFileSrc(pickedFile.path)
+          );
+
+          blob = await response.blob();
+        } else {
+          continue;
+        }
+
+        selectedFiles.push(
+          new File(
+            [blob],
+            pickedFile.name || "upload",
+            {
+              type:
+                pickedFile.mimeType ||
+                blob.type ||
+                "application/octet-stream",
+            }
+          )
+        );
+      } catch (error) {
+        console.error("Failed to prepare file:", error);
+      }
+    }
+
+    uploadSelectedFiles(selectedFiles);
+  } catch (error) {
+    console.error("File picker cancelled or failed:", error);
+  }
+};
+
+
+
+
+
+
+ const handleFileSelected = (e) => {
+  const selectedFiles = Array.from(e.target.files);
+
+  if (!selectedFiles.length) return;
+
+  uploadSelectedFiles(selectedFiles);
+
+  e.target.value = null;
+};
+
 
   const reloadFiles = async () => {
     const data = await getFiles(currentFolder ? `?parent=${currentFolder}` : "");
@@ -641,7 +767,7 @@ export default function Files({ initialMode = "files" }) {
                     />
 
                     <button
-                      onClick={() => fileInputRef.current.click()}
+                      onClick={() => setShowUploadOptions(true)}
                       className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
                     >
                       <UploadIcon />
@@ -765,7 +891,7 @@ export default function Files({ initialMode = "files" }) {
 
                 {mode === "files" && (
                   <button
-                    onClick={() => fileInputRef.current.click()}
+                    onClick={() => setShowUploadOptions(true)}
                     className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
                   >
                     <UploadIcon />
@@ -915,6 +1041,111 @@ export default function Files({ initialMode = "files" }) {
           </div>
         )}
       </div>
+
+
+        {showUploadOptions && (
+  <div
+    className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/40 p-3 backdrop-blur-[2px] sm:items-center"
+    onClick={() => setShowUploadOptions(false)}
+  >
+    <div
+      className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_25px_80px_rgba(15,23,42,0.28)]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-6 pb-5 pt-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25">
+              <UploadIcon className="h-5 w-5" />
+            </div>
+
+            <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
+              Upload to SafeVault
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Choose what you want to upload
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowUploadOptions(false)}
+            className="grid h-9 w-9 place-items-center rounded-full bg-white/80 text-lg text-slate-400 shadow-sm transition hover:bg-white hover:text-slate-700"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-3 px-5 py-5">
+        <button
+          type="button"
+          onClick={() => {
+            setShowUploadOptions(false);
+            openMediaPicker();
+          }}
+          className="group flex w-full items-center gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 to-white p-4 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md active:scale-[0.98]"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-2xl shadow-lg shadow-blue-500/20">
+            🖼️
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="font-bold text-slate-900">
+              Photos & Videos
+            </div>
+
+            <div className="mt-1 text-sm text-slate-500">
+              Choose from your gallery
+            </div>
+          </div>
+
+          <ArrowIcon className="h-5 w-5 text-blue-400 transition group-hover:translate-x-1" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowUploadOptions(false);
+            openFilePicker();
+          }}
+          className="group flex w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md active:scale-[0.98]"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
+            📁
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="font-bold text-slate-900">
+              Files & Documents
+            </div>
+
+            <div className="mt-1 text-sm text-slate-500">
+              PDFs, audio, documents and more
+            </div>
+          </div>
+
+          <ArrowIcon className="h-5 w-5 text-slate-400 transition group-hover:translate-x-1" />
+        </button>
+      </div>
+
+      <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-3">
+        <button
+          type="button"
+          onClick={() => setShowUploadOptions(false)}
+          className="w-full rounded-xl py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-white hover:text-slate-800"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
 
       <ImagePreview
         files={previewFiles}

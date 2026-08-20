@@ -1,10 +1,12 @@
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
+import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { getFiles } from "../utils/api";
 import ImagePreview from "../components/ImagePreview";
 import { API_BASE } from "../utils/api";
+import { trackFirstFileUpload } from "../utils/analytics";
 import { motion, AnimatePresence } from "framer-motion";
 
 function formatSize(bytes) {
@@ -222,8 +224,10 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [toast, setToast] = useState("");
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
+ 
+  
 
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadFiles();
@@ -267,6 +271,75 @@ export default function Dashboard() {
       f.name?.toLowerCase().endsWith(".pdf")
   ).length;
 
+
+
+
+  const uploadPickedFiles = async (pickedFiles) => {
+  for (const pickedFile of pickedFiles) {
+    try {
+      let blob;
+
+      if (pickedFile.blob) {
+        blob = pickedFile.blob;
+      } else if (pickedFile.path) {
+        const response = await fetch(
+          Capacitor.convertFileSrc(pickedFile.path)
+        );
+        blob = await response.blob();
+      } else {
+        continue;
+      }
+
+      const file = new File(
+        [blob],
+        pickedFile.name || "upload",
+        {
+          type: pickedFile.mimeType || blob.type || "application/octet-stream",
+        }
+      );
+
+      handleUpload(file);
+    } catch (error) {
+      console.error("Failed to prepare selected file:", error);
+      setToast("Could not read selected file");
+    }
+  }
+};
+
+const openMediaPicker = async () => {
+  try {
+    const result = await FilePicker.pickMedia({
+      limit: 0,
+    });
+
+    if (result.files?.length) {
+      await uploadPickedFiles(result.files);
+    }
+  } catch (error) {
+    console.error("Media picker cancelled or failed:", error);
+  }
+};
+
+const openFilePicker = async () => {
+  try {
+    const result = await FilePicker.pickFiles({
+      limit: 0,
+    });
+
+    if (result.files?.length) {
+      await uploadPickedFiles(result.files);
+    }
+  } catch (error) {
+    console.error("File picker cancelled or failed:", error);
+  }
+};
+
+
+
+
+
+
+
   const handleUpload = (file) => {
     if (!file) return;
 
@@ -307,11 +380,19 @@ export default function Dashboard() {
       setUploading(false);
 
       if (xhr.status >= 200 && xhr.status < 300) {
-        setToast("Upload complete");
-        await loadFiles();
-      } else {
-        setToast("Upload failed");
-      }
+  setToast("Upload complete");
+
+  // Track only the user's first successful upload.
+  // Existing users with files already uploaded won't repeatedly
+  // count as a "first upload" conversion.
+  if (files.length === 0) {
+    await trackFirstFileUpload(file?.type || "unknown");
+  }
+
+  await loadFiles();
+} else {
+  setToast("Upload failed");
+}
 
       setTimeout(() => {
         setToast("");
@@ -356,7 +437,7 @@ export default function Dashboard() {
 
       <button
         type="button"
-        onClick={() => fileInputRef.current.click()}
+        onClick={() => setShowUploadOptions(true)}
         className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
       >
         <UploadIcon />
@@ -441,7 +522,7 @@ export default function Dashboard() {
       <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
         <button
           type="button"
-          onClick={() => fileInputRef.current.click()}
+          onClick={() => setShowUploadOptions(true)}
           className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3.5 text-sm font-black text-white shadow-lg shadow-blue-600/20 active:scale-[0.98]"
           aria-label="Upload file"
         >
@@ -668,7 +749,7 @@ export default function Dashboard() {
 
               <button
                 type="button"
-                onClick={() => fileInputRef.current.click()}
+                onClick={() => setShowUploadOptions(true)}
                 className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
               >
                 <UploadIcon />
@@ -738,18 +819,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Hidden upload input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          const selectedFiles = Array.from(e.target.files);
-          selectedFiles.forEach((file) => handleUpload(file));
-          e.target.value = null;
-        }}
-      />
+      
 
       {/* Upload HUD */}
       <AnimatePresence>
@@ -811,10 +881,199 @@ export default function Dashboard() {
       </AnimatePresence>
 
       <ImagePreview
-        files={previewFiles}
-        activeFile={previewFile}
-        onClose={() => setPreviewFile(null)}
-      />
+  files={previewFiles}
+  activeFile={previewFile}
+  onClose={() => setPreviewFile(null)}
+/>
+
+{showUploadOptions && (
+  <div
+    className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/40 px-3 pb-3 backdrop-blur-[2px] sm:items-center sm:p-4"
+    onClick={() => setShowUploadOptions(false)}
+  >
+    <div
+      className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_-10px_50px_rgba(15,23,42,0.25)]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Drag handle */}
+      <div className="flex justify-center pt-3">
+        <div className="h-1.5 w-11 rounded-full bg-slate-200" />
+      </div>
+
+      {/* Header */}
+      <div className="px-6 pb-5 pt-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-lg font-bold tracking-tight text-slate-950">
+              Upload to SafeVault
+            </p>
+
+            <p className="mt-1 text-sm leading-5 text-slate-500">
+              Choose where you want to upload from
+            </p>
+          </div>
+
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-200">
+            <svg
+              className="h-5 w-5 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 16V4m0 0L7 9m5-5 5 5M5 15v3a2 2 0 002 2h10a2 2 0 002-2v-3"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Options */}
+      <div className="space-y-3 px-4 pb-4">
+        {/* Photos */}
+        <button
+          type="button"
+          onClick={() => {
+            setShowUploadOptions(false);
+            openMediaPicker();
+          }}
+          className="group flex w-full items-center gap-4 rounded-[1.5rem] border border-slate-100 bg-gradient-to-r from-blue-50/90 to-indigo-50/60 p-4 text-left shadow-sm transition-all duration-200 active:scale-[0.98]"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-200">
+            <svg
+              className="h-7 w-7 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <rect x="3" y="4" width="18" height="16" rx="3" />
+              <circle cx="8.5" cy="9" r="1.5" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m4 17 4.5-4.5a2 2 0 012.8 0l2.2 2.2 1.5-1.5a2 2 0 012.8 0L21 16.5"
+              />
+            </svg>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-bold text-slate-900">
+              Photos & Videos
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Choose memories from your gallery
+            </p>
+          </div>
+
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm transition-transform duration-200 group-active:translate-x-1">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m9 18 6-6-6-6"
+              />
+            </svg>
+          </div>
+        </button>
+
+        {/* Files */}
+        <button
+          type="button"
+          onClick={() => {
+            setShowUploadOptions(false);
+            openFilePicker();
+          }}
+          className="group flex w-full items-center gap-4 rounded-[1.5rem] border border-slate-100 bg-slate-50/80 p-4 text-left shadow-sm transition-all duration-200 active:scale-[0.98]"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 shadow-lg shadow-purple-200">
+            <svg
+              className="h-7 w-7 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V7z"
+              />
+            </svg>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-bold text-slate-900">
+              Files & Documents
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              PDFs, documents, audio and more
+            </p>
+          </div>
+
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm transition-transform duration-200 group-active:translate-x-1">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m9 18 6-6-6-6"
+              />
+            </svg>
+          </div>
+        </button>
+      </div>
+
+      {/* Privacy hint */}
+      <div className="mx-4 mb-4 flex items-center justify-center gap-2 rounded-2xl bg-slate-50 px-4 py-3">
+        <svg
+          className="h-4 w-4 text-blue-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+          />
+        </svg>
+
+        <span className="text-xs font-medium text-slate-500">
+          Your files stay private and protected
+        </span>
+      </div>
+
+      {/* Cancel */}
+      <div className="border-t border-slate-100 p-3">
+        <button
+          type="button"
+          onClick={() => setShowUploadOptions(false)}
+          className="w-full rounded-2xl py-3.5 text-sm font-semibold text-slate-500 transition active:scale-[0.98] active:bg-slate-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  X,
+  Info,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  FileText,
+} from "lucide-react";
 import { API_BASE } from "../utils/api";
-
+import { App } from "@capacitor/app";
 
 export default function ImagePreview({ files = [], activeFile, onClose }) {
   const [index, setIndex] = useState(null);
@@ -11,19 +22,17 @@ export default function ImagePreview({ files = [], activeFile, onClose }) {
   const startX = useRef(0);
   const startY = useRef(0);
   const isDragging = useRef(false);
+
   const touchStartX = useRef(0);
-const touchStartY = useRef(0);
-const touchEndX = useRef(0);
-const touchEndY = useRef(0);
-const videoRef = useRef(null);
+  const touchStartY = useRef(0);
+  const touchEndX = useRef(0);
+  const touchEndY = useRef(0);
 
+  const videoRef = useRef(null);
+  const showInfoRef = useRef(false);
 
+  /* ---------- SYNC ACTIVE FILE ---------- */
 
-
-
-
-
-  /* ---------- SYNC INDEX ---------- */
   useEffect(() => {
     if (!activeFile || !files.length) {
       setIndex(null);
@@ -31,267 +40,682 @@ const videoRef = useRef(null);
     }
 
     const i = files.findIndex((f) => f._id === activeFile._id);
-    if (i === -1) onClose();
-    else {
-      setIndex(i);
-      setZoom(1);
-      setOffset({ x: 0, y: 0 });
-      setShowInfo(false);
+
+    if (i === -1) {
+      onClose();
+      return;
     }
+
+    setIndex(i);
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+    setShowInfo(false);
   }, [activeFile, files, onClose]);
 
+  /* ---------- RESET WHEN FILE CHANGES ---------- */
+
+  useEffect(() => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+    setShowInfo(false);
+  }, [index]);
+
+  useEffect(() => {
+  showInfoRef.current = showInfo;
+}, [showInfo]);
+
   /* ---------- KEYBOARD ---------- */
+
   useEffect(() => {
     if (index === null) return;
 
-    const key = (e) => {
+    const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        setShowInfo(false);
-        onClose();
+        e.preventDefault();
+
+        if (showInfo) {
+          setShowInfo(false);
+        } else {
+          onClose();
+        }
       }
-      if (e.key === "ArrowRight" && index < files.length - 1)
+
+      if (e.key === "ArrowRight" && index < files.length - 1) {
         setIndex((i) => i + 1);
-      if (e.key === "ArrowLeft" && index > 0)
+      }
+
+      if (e.key === "ArrowLeft" && index > 0) {
         setIndex((i) => i - 1);
+      }
     };
 
-    window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
-  }, [index, files.length, onClose]);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [index, files.length, onClose, showInfo]);
+
+
+    const handleClose = () => {
+    setShowInfo(false);
+    onClose();
+  };
+
+    /* ---------- ANDROID / BROWSER BACK ---------- */
+useEffect(() => {
+  if (index === null) return;
+
+  let backButtonListener;
+  let cancelled = false;
+
+  const setupBackHandler = async () => {
+    try {
+      const listener = await App.addListener(
+        "backButton",
+        () => {
+          if (showInfoRef.current) {
+            setShowInfo(false);
+            return;
+          }
+
+          handleClose();
+        }
+      );
+
+      if (cancelled) {
+        listener.remove();
+      } else {
+        backButtonListener = listener;
+      }
+    } catch {
+      // Browser fallback
+    }
+  };
+
+  setupBackHandler();
+
+  const handlePopState = () => {
+    if (showInfoRef.current) {
+      setShowInfo(false);
+    } else {
+      handleClose();
+    }
+  };
+
+  window.history.pushState(
+    { imagePreviewOpen: true },
+    "",
+    window.location.href
+  );
+
+  window.addEventListener("popstate", handlePopState);
+
+  return () => {
+    cancelled = true;
+
+    window.removeEventListener("popstate", handlePopState);
+
+    if (backButtonListener) {
+      backButtonListener.remove();
+    }
+  };
+}, []);
+
 
   if (index === null || !files[index]) return null;
 
   const file = files[index];
   const isVideo = file.type?.startsWith("video");
 
-  /* ---------- INTERACTIONS ---------- */
+  const goPrevious = () => {
+    if (index > 0) {
+      setIndex((i) => i - 1);
+    }
+  };
+
+  const goNext = () => {
+    if (index < files.length - 1) {
+      setIndex((i) => i + 1);
+    }
+  };
+
+  /* ---------- ZOOM ---------- */
+
+  const increaseZoom = () => {
+    setZoom((z) => Math.min(3, Number((z + 0.25).toFixed(2))));
+  };
+
+  const decreaseZoom = () => {
+    setZoom((z) => {
+      const nextZoom = Math.max(1, Number((z - 0.25).toFixed(2)));
+
+      if (nextZoom === 1) {
+        setOffset({ x: 0, y: 0 });
+      }
+
+      return nextZoom;
+    });
+  };
+
+  const resetZoom = () => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  };
+
+  /* ---------- MOUSE INTERACTIONS ---------- */
 
   const onWheel = (e) => {
     if (isVideo) return;
+
     e.preventDefault();
-    setShowInfo(false);
+
     const delta = e.deltaY < 0 ? 0.15 : -0.15;
-    setZoom((z) => Math.min(3, Math.max(1, z + delta)));
+
+    setZoom((z) => {
+      const nextZoom = Math.min(3, Math.max(1, z + delta));
+
+      if (nextZoom === 1) {
+        setOffset({ x: 0, y: 0 });
+      }
+
+      return nextZoom;
+    });
   };
 
   const onMouseDown = (e) => {
     if (isVideo || zoom === 1) return;
-    setShowInfo(false);
+
     isDragging.current = true;
+
     startX.current = e.clientX - offset.x;
     startY.current = e.clientY - offset.y;
   };
 
   const onMouseMove = (e) => {
     if (!isDragging.current) return;
+
     setOffset({
       x: e.clientX - startX.current,
       y: e.clientY - startY.current,
     });
   };
 
-  const onMouseUp = () => (isDragging.current = false);
+  const onMouseUp = () => {
+    isDragging.current = false;
+  };
 
-  const MIN_SWIPE_DISTANCE = 50;
+  /* ---------- TOUCH / SWIPE ---------- */
 
-const onTouchStart = (e) => {
-  const touch = e.touches[0];
-  touchStartX.current = touch.clientX;
-  touchStartY.current = touch.clientY;
-};
+  const MIN_SWIPE_DISTANCE = 55;
 
-const onTouchMove = (e) => {
-  const touch = e.touches[0];
-  touchEndX.current = touch.clientX;
-  touchEndY.current = touch.clientY;
-};
+  const onTouchStart = (e) => {
+    const touch = e.touches[0];
 
-const onTouchEnd = (e) => {
-  e.stopPropagation();
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
 
-  const dx = touchEndX.current - touchStartX.current;
-  const dy = touchEndY.current - touchStartY.current;
+    touchEndX.current = touch.clientX;
+    touchEndY.current = touch.clientY;
+  };
 
-  if (Math.abs(dx) < Math.abs(dy)) return;
+  const onTouchMove = (e) => {
+    const touch = e.touches[0];
 
-  let didChange = false;
+    touchEndX.current = touch.clientX;
+    touchEndY.current = touch.clientY;
+  };
 
-  if (dx > MIN_SWIPE_DISTANCE && index > 0) {
-    setIndex((i) => i - 1);
-    didChange = true;
-  }
+  const onTouchEnd = (e) => {
+    const dx = touchEndX.current - touchStartX.current;
+    const dy = touchEndY.current - touchStartY.current;
 
-  if (dx < -MIN_SWIPE_DISTANCE && index < files.length - 1) {
-    setIndex((i) => i + 1);
-    didChange = true;
-  }
+    if (Math.abs(dx) < Math.abs(dy)) return;
 
-  // 👇 EXACTLY BELOW swipe logic
-  if (didChange) {
-    setTimeout(() => {
-      videoRef.current?.play().catch(() => {});
-    }, 120);
-  }
-};
+    if (Math.abs(dx) < MIN_SWIPE_DISTANCE) return;
 
+    if (dx > 0 && index > 0) {
+      goPrevious();
+    }
 
+    if (dx < 0 && index < files.length - 1) {
+      goNext();
+    }
+  };
 
+  const formatFileSize = (size) => {
+    if (!size) return "Unknown";
 
+    const units = ["B", "KB", "MB", "GB", "TB"];
 
+    let value = size;
+    let unitIndex = 0;
 
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex += 1;
+    }
 
+    return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${
+      units[unitIndex]
+    }`;
+  };
 
-
-
-  /* ---------- UI ---------- */
+  
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-2xl"
-      onClick={() => {
-        setShowInfo(false);
-        onClose();
-      }}
+      className="fixed inset-0 z-[100] overflow-hidden bg-[#0B0D12]"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Preview ${file.name}`}
     >
-      {/* TOP BAR */}
+      {/* ---------- PREMIUM TOP BAR ---------- */}
+
       <div
-        className="absolute top-0 left-0 right-0 h-14 flex items-center justify-between px-6 text-white bg-gradient-to-b from-black/60 to-transparent z-30"
-        onClick={(e) => e.stopPropagation()}
+        className="
+          absolute inset-x-0 top-0 z-40
+          bg-gradient-to-b from-black/75 via-black/35 to-transparent
+          px-4
+          pt-[max(env(safe-area-inset-top),16px)]
+          pb-8
+        "
       >
-        <div className="truncate text-sm font-medium tracking-wide">
-          {file.name}
-        </div>
+        <div className="flex items-center justify-between gap-3">
+          {/* FILE NAME */}
 
-        <div className="flex gap-6 items-center text-sm">
-          {!isVideo && (
-            <>
-              <button onClick={() => setZoom((z) => Math.min(3, z + 0.25))}>
-                ＋
-              </button>
-              <button onClick={() => setZoom((z) => Math.max(1, z - 0.25))}>
-                －
-              </button>
-            </>
-          )}
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div
+              className="
+                flex h-10 w-10 shrink-0 items-center justify-center
+                rounded-full border border-white/10 bg-white/10
+                text-white backdrop-blur-xl
+              "
+            >
+              <FileText size={18} />
+            </div>
 
-          <button onClick={() => setShowInfo((v) => !v)}>Info</button>
+            <div className="min-w-0">
+              <div className="truncate text-[15px] font-semibold text-white">
+                {file.name}
+              </div>
 
-          <a
-            href={`${API_BASE}/files/download/${file._id}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Download
-          </a>
+              <div className="mt-0.5 text-xs text-white/55">
+                {formatFileSize(file.size)}
+              </div>
+            </div>
+          </div>
 
-          <button onClick={onClose}>✕</button>
+          {/* ACTIONS */}
+
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowInfo((v) => !v)}
+              className="
+                flex h-11 w-11 items-center justify-center
+                rounded-full border border-white/10
+                bg-white/10 text-white
+                backdrop-blur-xl
+                transition active:scale-95
+                hover:bg-white/20
+              "
+              aria-label="File information"
+            >
+              <Info size={20} />
+            </button>
+
+            <a
+              href={`${API_BASE}/files/download/${file._id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="
+                hidden sm:flex h-11 w-11 items-center justify-center
+                rounded-full border border-white/10
+                bg-white/10 text-white
+                backdrop-blur-xl
+                transition active:scale-95
+                hover:bg-white/20
+              "
+              aria-label="Download file"
+            >
+              <Download size={20} />
+            </a>
+
+            {/* CLEAR, LARGE CLOSE BUTTON */}
+
+            <button
+              type="button"
+              onClick={handleClose}
+              className="
+                flex h-11 w-11 items-center justify-center
+                rounded-full
+                bg-white text-[#111318]
+                shadow-lg shadow-black/30
+                transition active:scale-95
+              "
+              aria-label="Close preview"
+            >
+              <X size={21} strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* MEDIA STAGE */}
-      <div
-  className="absolute inset-0 flex items-center justify-center"
-  onClick={(e) => {
-    e.stopPropagation();
-    setShowInfo(false);
-  }}
-  onWheel={onWheel}
-  onMouseDown={onMouseDown}
-  onMouseMove={onMouseMove}
-  onMouseUp={onMouseUp}
-  onMouseLeave={onMouseUp}
-  onTouchStart={onTouchStart}
-  onTouchMove={onTouchMove}
-  onTouchEnd={onTouchEnd}
-  style={{ touchAction: "pan-y" }}
+      {/* ---------- MEDIA STAGE ---------- */}
 
->
+      <div
+        className="absolute inset-0 flex items-center justify-center px-3 py-24"
+        onWheel={onWheel}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{
+          touchAction: "pan-y",
+        }}
+      >
+        {/* PREVIOUS */}
 
         {index > 0 && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setIndex(index - 1);
+              goPrevious();
             }}
-            className="absolute left-4 text-white text-5xl opacity-70 hover:opacity-100"
+            className="
+              absolute left-3 z-30
+              hidden sm:flex
+              h-12 w-12 items-center justify-center
+              rounded-full border border-white/10
+              bg-black/30 text-white
+              backdrop-blur-xl
+              transition hover:bg-black/60
+              active:scale-95
+            "
+            aria-label="Previous file"
           >
-            ‹
+            <ChevronLeft size={28} />
           </button>
         )}
+
+        {/* NEXT */}
 
         {index < files.length - 1 && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setIndex(index + 1);
+              goNext();
             }}
-            className="absolute right-4 text-white text-5xl opacity-70 hover:opacity-100"
+            className="
+              absolute right-3 z-30
+              hidden sm:flex
+              h-12 w-12 items-center justify-center
+              rounded-full border border-white/10
+              bg-black/30 text-white
+              backdrop-blur-xl
+              transition hover:bg-black/60
+              active:scale-95
+            "
+            aria-label="Next file"
           >
-            ›
+            <ChevronRight size={28} />
           </button>
         )}
 
-        {isVideo ? (
-  <video
-    ref={videoRef}
-    src={`${API_BASE}/files/${file._id}/preview`}
-    controls
-    playsInline
-    muted
-    preload="metadata"
-    className="max-w-full max-h-[80vh] rounded-2xl shadow-[0_40px_120px_rgba(0,0,0,0.6)] bg-black"
-  />
-) : (
+        {/* VIDEO */}
 
+        {isVideo ? (
+          <video
+            ref={videoRef}
+            src={`${API_BASE}/files/${file._id}/preview`}
+            controls
+            playsInline
+            preload="metadata"
+            className="
+              max-h-full max-w-full
+              rounded-2xl
+              bg-black
+              shadow-[0_30px_100px_rgba(0,0,0,0.55)]
+            "
+          />
+        ) : (
           <img
             src={`${API_BASE}/files/${file._id}/preview`}
-
             alt={file.name}
             draggable={false}
-            className="select-none max-w-full max-h-[80vh] rounded-2xl shadow-[0_40px_120px_rgba(0,0,0,0.6)]"
+            className="
+              max-h-full max-w-full
+              select-none
+              rounded-2xl
+              object-contain
+              shadow-[0_30px_100px_rgba(0,0,0,0.55)]
+              transition-transform duration-150
+            "
             style={{
               transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
               cursor: zoom > 1 ? "grab" : "default",
             }}
           />
         )}
-
-        <div className="absolute bottom-6 text-xs text-gray-300">
-          {index + 1} / {files.length}
-        </div>
       </div>
 
-      {/* INFO DRAWER */}
-      {showInfo && (
-        <aside
-          className="absolute right-0 top-0 h-full w-80 bg-white/95 backdrop-blur-xl border-l shadow-2xl z-40 p-6"
-          onClick={(e) => e.stopPropagation()}
+      {/* ---------- IMAGE CONTROLS ---------- */}
+
+      {!isVideo && (
+        <div
+          className="
+            absolute bottom-[max(env(safe-area-inset-bottom),20px)]
+            left-1/2 z-40
+            -translate-x-1/2
+          "
         >
-          <h3 className="font-semibold mb-6 text-lg">File details</h3>
+          <div
+            className="
+              flex items-center gap-1
+              rounded-2xl
+              border border-white/10
+              bg-black/45
+              p-1.5
+              text-white
+              shadow-2xl
+              backdrop-blur-2xl
+            "
+          >
+            <button
+              type="button"
+              onClick={decreaseZoom}
+              className="
+                flex h-10 w-10 items-center justify-center
+                rounded-xl transition
+                hover:bg-white/10 active:scale-95
+              "
+              aria-label="Zoom out"
+            >
+              <ZoomOut size={19} />
+            </button>
 
-          <div className="space-y-4 text-sm text-gray-700">
-            <div>
-              <div className="text-gray-500">Name</div>
-              <div className="break-all font-medium">{file.name}</div>
-            </div>
+            <button
+              type="button"
+              onClick={resetZoom}
+              className="
+                min-w-[62px] px-3
+                text-xs font-semibold text-white/90
+              "
+            >
+              {Math.round(zoom * 100)}%
+            </button>
 
-            <div>
-              <div className="text-gray-500">Type</div>
-              <div>{file.type}</div>
-            </div>
+            <button
+              type="button"
+              onClick={increaseZoom}
+              className="
+                flex h-10 w-10 items-center justify-center
+                rounded-xl transition
+                hover:bg-white/10 active:scale-95
+              "
+              aria-label="Zoom in"
+            >
+              <ZoomIn size={19} />
+            </button>
 
-            <div>
-              <div className="text-gray-500">Size</div>
-              <div>{(file.size / (1024 * 1024)).toFixed(2)} MB</div>
-            </div>
+            <div className="mx-1 h-5 w-px bg-white/10" />
 
-            <div>
-              <div className="text-gray-500">Uploaded</div>
-              <div>{new Date(file.createdAt).toLocaleString()}</div>
-            </div>
+            <button
+              type="button"
+              onClick={resetZoom}
+              className="
+                flex h-10 w-10 items-center justify-center
+                rounded-xl transition
+                hover:bg-white/10 active:scale-95
+              "
+              aria-label="Reset zoom"
+            >
+              <Maximize2 size={18} />
+            </button>
           </div>
-        </aside>
+        </div>
       )}
+
+      {/* ---------- MOBILE FILE POSITION ---------- */}
+
+      <div
+        className="
+  absolute bottom-[calc(max(env(safe-area-inset-bottom),22px)+68px)]
+          left-1/2 z-30
+          -translate-x-1/2
+          rounded-full
+          border border-white/10
+          bg-black/35
+          px-3 py-1.5
+          text-xs font-medium text-white/70
+          backdrop-blur-xl
+          sm:hidden
+          pointer-events-none
+        "
+      >
+        {index + 1} of {files.length}
+      </div>
+
+      {/* ---------- INFO PANEL ---------- */}
+
+      {showInfo && (
+        <>
+          <div
+            className="absolute inset-0 z-40 bg-black/35 backdrop-blur-[2px]"
+            onClick={() => setShowInfo(false)}
+          />
+
+          <aside
+            className="
+              absolute z-50
+              inset-x-0 bottom-0
+              max-h-[75vh]
+              overflow-y-auto
+              rounded-t-[28px]
+              bg-white
+              p-6
+              pb-[max(env(safe-area-inset-bottom),24px)]
+              shadow-[0_-20px_80px_rgba(0,0,0,0.4)]
+              sm:inset-y-0 sm:left-auto sm:right-0
+              sm:max-h-none sm:w-[380px]
+              sm:rounded-none
+              sm:pb-6
+            "
+          >
+            <div className="mx-auto mb-5 h-1.5 w-10 rounded-full bg-gray-200 sm:hidden" />
+
+            <div className="mb-7 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  File details
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Information about this file
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowInfo(false)}
+                className="
+                  flex h-10 w-10 items-center justify-center
+                  rounded-full bg-gray-100
+                  text-gray-700
+                  transition hover:bg-gray-200
+                "
+                aria-label="Close information"
+              >
+                <X size={19} />
+              </button>
+            </div>
+
+            <div className="divide-y divide-gray-100 rounded-2xl border border-gray-100">
+              <InfoRow label="Name" value={file.name} breakAll />
+
+              <InfoRow
+                label="Type"
+                value={file.type || "Unknown"}
+              />
+
+              <InfoRow
+                label="Size"
+                value={formatFileSize(file.size)}
+              />
+
+              <InfoRow
+                label="Uploaded"
+                value={
+                  file.createdAt
+                    ? new Date(file.createdAt).toLocaleString()
+                    : "Unknown"
+                }
+              />
+            </div>
+
+            <a
+              href={`${API_BASE}/files/download/${file._id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="
+                mt-6 flex w-full items-center justify-center gap-2
+                rounded-2xl
+                bg-[#15171C]
+                px-4 py-3.5
+                text-sm font-semibold text-white
+                transition active:scale-[0.98]
+              "
+            >
+              <Download size={18} />
+              Download file
+            </a>
+          </aside>
+        </>
+      )}
+    </div>
+  );
+}
+
+function InfoRow({ label, value, breakAll = false }) {
+  return (
+    <div className="p-4">
+      <div className="text-xs font-medium uppercase tracking-[0.12em] text-gray-400">
+        {label}
+      </div>
+
+      <div
+        className={`mt-1.5 text-sm font-medium text-gray-900 ${
+          breakAll ? "break-all" : ""
+        }`}
+      >
+        {value}
+      </div>
     </div>
   );
 }

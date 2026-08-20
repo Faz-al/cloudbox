@@ -2,12 +2,19 @@
 <resources>
 
     <style name="AppTheme.Splash" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowSplashScreenBackground">#ffffff</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">#ffffff</item>
+
+        <item name="android:windowSplashScreenBackground">@drawable/splash_gradient</item>
+
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+
+        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:statusBarColor">#ffffff</item>
-        <item name="android:navigationBarColor">#ffffff</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+
     </style>
 
 </resources>
